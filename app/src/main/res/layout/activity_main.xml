@@ -22,14 +22,41 @@
             android:layout_weight="2" />
 
 
-        <Button
-            android:id="@+id/start"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="4"
-            android:background="@android:color/holo_green_dark"
-            android:text="start"
-            android:onClick="onStart"/>
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/previous"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="@android:color/holo_green_dark"
+                android:text="previous"
+                android:onClick="onPrevious"
+                />
+            <Button
+                android:id="@+id/start"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/holo_green_dark"
+                android:text="пуск"
+                android:onClick="onStart"
+                />
+            <Button
+                android:id="@+id/next"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="@android:color/holo_green_dark"
+                android:text="next"
+                android:onClick="onNext"
+                />
+
+        </LinearLayout>
 
         <EditText
             android:layout_margin="8dp"

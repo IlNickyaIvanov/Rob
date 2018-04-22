@@ -1,12 +1,9 @@
 package com.example.ilya2.rob;
 
 import android.app.Activity;
-
 import java.util.ArrayList;
 
-//ДОБРО ПОЖАЛОВАТЬ В МОЙ ЛЮБИМЫЙ КЛАСС!
-//заметьте, класс, практически, не использует импортов
-//пометка - с 1ой по 4ую - анимации поиска, пятая - поедание
+
 class KodParser {
     private static int symbolslENGTH;
     int action;
@@ -560,4 +557,5 @@ class KodParser {
         return pause;
     }
 }
+
 

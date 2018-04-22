@@ -12,14 +12,17 @@ public class MainActivity extends AppCompatActivity {
             {0,0,0,0,0},
             {0,0,0,0,0},
             {0,0,0,0,0},
-            {0,0,0,0,0},};
-    Square [][] squares;
-    static Robot robot;
+            {0,0,0,0,0}};
+    static Square [][] squares;
+    int robotNum=0;
+    String commands[];
+    Robot robots[];
+    Bot bot;
     static String AlertDialogMessage;
     boolean pause=false;
     boolean move=false;
-    int count,action;
-    KodParser kodParser;
+    int counts[],actions[];
+    KodParser kodParsers[];
     EditText editText;
     String toast = "Все ок";
     @Override
@@ -28,8 +31,25 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         MyTimer timer = new MyTimer();
         timer.start();
-        squares = new Square[map.length][map[0].length];
         editText = findViewById(R.id.editText);
+        startGame();
+        robots = new Robot[2];
+        kodParsers = new KodParser[2];
+        actions = new int[2];
+        counts = new int[2];
+        commands = new String[2];
+        robots[0] = new Robot(this,0,0);
+        robots[1] = new Robot(this,squares.length-1,0);
+        bot = new Bot(this,squares.length-1,squares.length-1);
+        kodParsers[0] = new KodParser(robots[0].sqX,robots[0].sqY,squares,100,this);
+        kodParsers[1] = new KodParser(robots[1].sqX,robots[1].sqY,squares,100,this);
+        robots[robotNum].startAnim();
+    }
+
+
+
+    public void startGame(){
+        squares = new Square[map.length][map[0].length];
         int screenWidth = getApplicationContext().getResources().getDisplayMetrics().widthPixels;
         int screenHeight = getApplicationContext().getResources().getDisplayMetrics().heightPixels-50;
         if (map.length>map[0].length)
@@ -43,83 +63,74 @@ public class MainActivity extends AppCompatActivity {
                 squares[i][j] = new Square(this,j*(Square.size)+Square.startX ,i*(Square.size)+Square.startY);
             }
         }
-        robot = new Robot(this,squares[Math.round(map.length/2)][Math.round(map[0].length/2)].x,squares[Math.round(map.length/2)][Math.round(map[0].length/2)].y);
-        kodParser = new KodParser(Math.round(map.length/2),Math.round(map[0].length/2),squares,100,this);
     }
 
     public void onStart(View view) {
         if (!move) {
-            //при туториале возвращение в стартовые только мешает
-            String text = editText.getText().toString();
-            //а вот здесь самое интересное)
-            action = kodParser.kodParser(text);
+            robots[robotNum].stopAnim();
+            commands[robotNum] = editText.getText().toString();
+            actions[0] = kodParsers[0].kodParser(commands[0]);
+            actions[1] = kodParsers[1].kodParser(commands[1]);
             move = true;
         }
+    }
 
+    public void onPrevious(View view) {
+        robots[robotNum].stopAnim();
+        commands[robotNum] = editText.getText().toString();
+        if(robotNum==0) robotNum=robots.length-1;
+        else robotNum-=1;
+        editText.setText(commands[robotNum]);
+        robots[robotNum].startAnim();
+    }
+
+    public void onNext(View view) {
+        robots[robotNum].stopAnim();
+        commands[robotNum] = editText.getText().toString();
+        if(robotNum==robots.length-1) robotNum=0;
+        else robotNum+=1;
+        editText.setText(commands[robotNum]);
+        robots[robotNum].startAnim();
     }
 
     public void update() {
         //начало выполнения программы
         if (move) {//включается при нажатии ПУСК
-            Handler();
-        } else {
-            robot.MoveMySelf(false);
+            if(counts[0] < actions[0])Handler(0);
+            if(counts[1] < actions[1])Handler(1);
+            if(counts[0] == 0 && counts[1] == 0)
+                move = false;
         }
-        //конец списка команд
-        if (count >= action && move) {//конец движения
-            //restartBLINKY();
-            move = false;
-            kodParser.action = 0;
-            count = 0;
-
-            if (AlertDialogMessage != null) {
-                Utils.AlertDialog(this, getString(R.string.cant), AlertDialogMessage, "ок");
-                editText.setSelection(kodParser.start, kodParser.stop);
-            }
-            //по прохождению уровня...
-//            else if (checkTask())
-//                if (!getIntent().getBooleanExtra("own_level", false))
-//                    Utils.TwoButtonAllertDialog(this, getString(R.string.level) + " " + level_name + getString(R.string.compl2),
-//                            onComplete,
-//                            getString(R.string.menu), getString(R.string.next), LEVEL_NUM);
-//                else
-//                    Utils.AlertDialog(this, getString(R.string.level) + " " + level_name + getString(R.string.compl2),
-//                            onComplete,
-//                            getString(R.string.ok));
-//            else if (!Tutorial.task) {
-//                Utils.makeToast(this, getString(R.string.try_more));
-// }
-            else Utils.makeToast(this, toast);//отчет об выполении
-
-        }
-
     }
 
-    void Handler() {
+    void Handler(int num) {
         //если в коде ошибка
-        if (AlertDialogMessage != null && kodParser.isKodERROR()) {
+        if (AlertDialogMessage != null && kodParsers[0].isKodERROR()) {
             Utils.AlertDialog(this,"Ошибка в коде!", AlertDialogMessage, "ок");
-            editText.setSelection(kodParser.start, kodParser.stop);
             move = false;
-            count = 0;
-            action = 0;
-            kodParser.setAction(0);
-        } else if (action != 0) {
-            //вот здесь и запускается то, что видет пользователь
-//            if (kodParser.Anim[count] != 0) {
-//                if (kodParser.Anim[count] == 5) for (int i = 0; i < foodSquares.size(); i++) {
-//                    int food[] = foodSquares.get(i);
-//                    if ((kodParser.ARy[count]) == food[0] && (kodParser.ARx[count]) == food[1] && !squares[food[0]][food[1]].food.isEaten())
-//                        squares[food[0]][food[1]].EAT();
-//                }
-//                else robot.SearchAnim(kodParser.Anim[count]);
-//                kodParser.Anim[count] = 0;
-//            }
-            robot.RobotMove(
-                    squares[(kodParser.ARy[count])][(kodParser.ARx[count])].y,
-                    squares[(kodParser.ARy[count])][(kodParser.ARx[count])].x,
-                    kodParser.ARy[count], kodParser.ARx[count], false);//перемещение в клетку [sqY][sqX]
-            count++;//перебор элементов массивов "положения" до action
+            counts[num] = 0;
+            actions[num] = 0;
+            kodParsers[num].setAction(0);
+        } else if (actions[num] != 0) {
+            robots[num].RobotMove(kodParsers[num].ARy[counts[num]], kodParsers[num].ARx[counts[num]]);//перемещение в клетку [sqY][sqX]
+            bot.hunt(robots[num].sqX,robots[num].sqY);
+            if(bot.sqX == robots[num].sqX && bot.sqY==robots[num].sqY) {
+                Utils.AlertDialog(this, "Конец игры", "Вас поймали...", "Заново");
+                robots[0].RobotMove(0,0);
+                robots[1].RobotMove(0,squares.length-1);
+                robots[robotNum].startAnim();
+                bot.botMove(squares.length-1,squares.length-1);
+            }
+            counts[num]++;//перебор элементов массивов "положения" до action
+        }
+        if (counts[num] >= actions[num]) {//конец движения
+            kodParsers[num].action = 0;
+            counts[num] = 0;
+            robots[robotNum].startAnim();
+            if (AlertDialogMessage != null) {
+                Utils.AlertDialog(this, getString(R.string.cant), AlertDialogMessage, "ок");
+            }
+            else Utils.makeToast(this, toast);//отчет об выполении
         }
     }
 
@@ -127,15 +138,12 @@ public class MainActivity extends AppCompatActivity {
         MyTimer() {
             super(Integer.MAX_VALUE, 1000);
         }
-
         @Override
         public void onTick(long millisIntilFinished) {
             if (!pause) update();
         }
-
         @Override
         public void onFinish() {
         }
     }
-
 }
