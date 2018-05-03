@@ -9,67 +9,63 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0"
         tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="0dp">
 
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="2" />
-
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="4"
-            android:orientation="horizontal">
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="6"
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/previous"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:background="@android:color/holo_green_dark"
-                android:text="previous"
-                android:onClick="onPrevious"
-                />
-            <Button
-                android:id="@+id/start"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@android:color/holo_green_dark"
-                android:text="пуск"
-                android:onClick="onStart"
-                />
-            <Button
-                android:id="@+id/next"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:background="@android:color/holo_green_dark"
-                android:text="next"
-                android:onClick="onNext"
-                />
+                <Button
+                    android:id="@+id/previous"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2"
+                    android:background="@android:color/holo_green_dark"
+                    android:onClick="onPrevious"
+                    android:text="previous" />
 
+                <Button
+                    android:id="@+id/start"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/holo_green_dark"
+                    android:onClick="onStart"
+                    android:text="пуск" />
+
+                <Button
+                    android:id="@+id/next"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2"
+                    android:background="@android:color/holo_green_dark"
+                    android:onClick="onNext"
+                    android:text="next" />
+
+            </LinearLayout>
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
         </LinearLayout>
 
-        <EditText
-            android:layout_margin="8dp"
-            android:id="@+id/editText"
+        <Space
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="3"
-            android:background="#343434"
-            android:gravity="center|top"
-            android:hint="add comands..."
-            android:text=""
-            android:textColor="@android:color/holo_orange_dark"
-            android:textSize="24sp" />
+            android:layout_weight="1" />
+
 
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

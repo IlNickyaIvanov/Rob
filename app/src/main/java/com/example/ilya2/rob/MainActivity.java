@@ -3,10 +3,13 @@ package com.example.ilya2.rob;
 import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
-import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity {
+
+    static int activeRobot=0;
+
     int map[][] = {
             {0,0,0,0,0},
             {0,0,0,0,0},
@@ -14,50 +17,50 @@ public class MainActivity extends AppCompatActivity {
             {0,0,0,0,0},
             {0,0,0,0,0}};
     static Square [][] squares;
-    int robotNum=0;
-    String commands[];
-    Robot robots[];
+    static Robot robots[];
     Bot bot;
     static String AlertDialogMessage;
     boolean pause=false;
     boolean move=false;
-    int counts[],actions[];
-    KodParser kodParsers[];
-    EditText editText;
-    String toast = "Все ок";
+    static Command commands[];
+    static Stuff stuff[];
+    static int screenWidth,screenHeight;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         MyTimer timer = new MyTimer();
         timer.start();
-        editText = findViewById(R.id.editText);
         startGame();
         robots = new Robot[2];
-        kodParsers = new KodParser[2];
-        actions = new int[2];
-        counts = new int[2];
-        commands = new String[2];
-        robots[0] = new Robot(this,0,0);
-        robots[1] = new Robot(this,squares.length-1,0);
-        bot = new Bot(this,squares.length-1,squares.length-1);
-        kodParsers[0] = new KodParser(robots[0].sqX,robots[0].sqY,squares,100,this);
-        kodParsers[1] = new KodParser(robots[1].sqX,robots[1].sqY,squares,100,this);
-        robots[robotNum].startAnim();
+        robots[0] = new Robot(this,0,0,2,squares);
+        robots[1] = new Robot(this,squares[0].length-1,squares.length-1,0,squares);
+        bot = new Bot(this,Math.round(squares[0].length/2),Math.round(squares.length/2));
+        robots[activeRobot].startAnim();
+
+        stuff = new Stuff[2];
+        for (int i=0;i<stuff.length;i++){
+            stuff[i]=new Stuff(this,(int) Math.round(Math.random()),squares);
+        }
+
+        commands = new Command[3];
+        for (int i=0;i<commands.length;i++) {
+            commands[i] = new Command(this,Command.size*i+2 , screenHeight-Command.size/2-5, i);
+        }
     }
 
 
 
     public void startGame(){
         squares = new Square[map.length][map[0].length];
-        int screenWidth = getApplicationContext().getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = getApplicationContext().getResources().getDisplayMetrics().heightPixels-50;
+        screenWidth = getApplicationContext().getResources().getDisplayMetrics().widthPixels;
+        screenHeight = getApplicationContext().getResources().getDisplayMetrics().heightPixels-50;
         if (map.length>map[0].length)
-            Square.size = screenHeight/2/(map.length);
+            Square.size = screenHeight/(map.length);
         else
-            Square.size = (screenWidth-50)/(map[0].length);
-        Square.startX = (screenWidth-Square.size*map[0].length)/2;
-        Square.startY = (screenHeight/2-Square.size*map.length)/2+50;
+            Square.size = (screenWidth/2-50)/(map[0].length);
+        Square.startX = (screenWidth/2+(screenWidth/2-Square.size*map[0].length)/2);
+        Square.startY = (screenHeight-Square.size*map.length)/2;
         for (int i=0;i<map.length;i++){
             for(int j=0;j<map[0].length;j++){
                 squares[i][j] = new Square(this,j*(Square.size)+Square.startX ,i*(Square.size)+Square.startY);
@@ -67,72 +70,99 @@ public class MainActivity extends AppCompatActivity {
 
     public void onStart(View view) {
         if (!move) {
-            robots[robotNum].stopAnim();
-            commands[robotNum] = editText.getText().toString();
-            actions[0] = kodParsers[0].kodParser(commands[0]);
-            actions[1] = kodParsers[1].kodParser(commands[1]);
+            robots[activeRobot].stopAnim();
+            for (Robot robot:robots)
+                robot.execute();
             move = true;
         }
     }
 
     public void onPrevious(View view) {
-        robots[robotNum].stopAnim();
-        commands[robotNum] = editText.getText().toString();
-        if(robotNum==0) robotNum=robots.length-1;
-        else robotNum-=1;
-        editText.setText(commands[robotNum]);
-        robots[robotNum].startAnim();
+        robots[activeRobot].stopAnim();
+        for (Block block: robots[activeRobot].blocks)
+            block.hide();
+        if(activeRobot ==0) activeRobot =robots.length-1;
+        else activeRobot -=1;
+        for (Block block: robots[activeRobot].blocks)
+            block.show();
+        robots[activeRobot].startAnim();
     }
 
     public void onNext(View view) {
-        robots[robotNum].stopAnim();
-        commands[robotNum] = editText.getText().toString();
-        if(robotNum==robots.length-1) robotNum=0;
-        else robotNum+=1;
-        editText.setText(commands[robotNum]);
-        robots[robotNum].startAnim();
+        robots[activeRobot].stopAnim();
+        for (Block block: robots[activeRobot].blocks)
+            block.hide();
+        if(activeRobot ==robots.length-1) activeRobot =0;
+        else activeRobot +=1;
+        for (Block block: robots[activeRobot].blocks)
+            block.show();
+        robots[activeRobot].startAnim();
     }
 
     public void update() {
-        //начало выполнения программы
         if (move) {//включается при нажатии ПУСК
-            if(counts[0] < actions[0])Handler(0);
-            if(counts[1] < actions[1])Handler(1);
-            if(counts[0] == 0 && counts[1] == 0)
-                move = false;
+            boolean ended=true;
+            for (Robot robot: robots){
+                if(ended)ended=robot.move();
+                else robot.move();
+            }
+            move=!ended;
+//            if(ended)
+////                for (Stuff stuff: stuff)
+////                    if(stuff.opened)stuff.delete();
         }
     }
 
-    void Handler(int num) {
-        //если в коде ошибка
-        if (AlertDialogMessage != null && kodParsers[0].isKodERROR()) {
-            Utils.AlertDialog(this,"Ошибка в коде!", AlertDialogMessage, "ок");
-            move = false;
-            counts[num] = 0;
-            actions[num] = 0;
-            kodParsers[num].setAction(0);
-        } else if (actions[num] != 0) {
-            robots[num].RobotMove(kodParsers[num].ARy[counts[num]], kodParsers[num].ARx[counts[num]]);//перемещение в клетку [sqY][sqX]
-            bot.hunt(robots[num].sqX,robots[num].sqY);
-            if(bot.sqX == robots[num].sqX && bot.sqY==robots[num].sqY) {
-                Utils.AlertDialog(this, "Конец игры", "Вас поймали...", "Заново");
-                robots[0].RobotMove(0,0);
-                robots[1].RobotMove(0,squares.length-1);
-                robots[robotNum].startAnim();
-                bot.botMove(squares.length-1,squares.length-1);
-            }
-            counts[num]++;//перебор элементов массивов "положения" до action
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch ( event.getAction() ) {
+            case MotionEvent.ACTION_DOWN:
+                for (Command command : commands) {
+                    refreshBlocks();
+                    if (command.touched) {
+                        robots[activeRobot].blocks.add(new Block(this, command.x, command.y,command.type));
+                        command.touched=false;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                Block to = null,that=null;
+                for (Block block: robots[activeRobot].blocks){
+                    if(block.touched) {
+                        to=block.setXY(event.getX(), event.getY());
+                        that=block;
+                    }
+                }
+                if(to!=null){
+                    robots[activeRobot].blocks.remove(that);
+                    robots[activeRobot].blocks.add(robots[activeRobot].blocks.indexOf(to)+1,that);
+                    refreshBlocks();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                boolean ok = false;
+                while(!ok) {
+                    for (Block block : robots[activeRobot].blocks) {
+                        if (!block.connected && robots[activeRobot].blocks.size() > 1) {
+                            block.delete();
+                            robots[activeRobot].blocks.remove(block);
+                            break;
+                        } else block.touched = false;
+                    }
+                    ok = true;
+                    refreshBlocks();
+                }
         }
-        if (counts[num] >= actions[num]) {//конец движения
-            kodParsers[num].action = 0;
-            counts[num] = 0;
-            robots[robotNum].startAnim();
-            if (AlertDialogMessage != null) {
-                Utils.AlertDialog(this, getString(R.string.cant), AlertDialogMessage, "ок");
-            }
-            else Utils.makeToast(this, toast);//отчет об выполении
+        return true;
+    }
+
+     void refreshBlocks(){
+
+        for(int i=1;i<robots[activeRobot].blocks.size();i++){
+            robots[activeRobot].blocks.get(i).setXY(robots[activeRobot].blocks.get(i-1));
         }
     }
+
 
     class MyTimer extends CountDownTimer {
         MyTimer() {
