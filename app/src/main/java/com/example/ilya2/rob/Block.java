@@ -10,36 +10,32 @@ import android.widget.TextView;
 
 public class Block {
     ImageView image;
-    int size=Command.size, alpha; // размер картинки, врещение, прозрачность
+    int size=Command.size*4/5, alpha; // размер картинки, врещение, прозрачность
     boolean touched=true;
     boolean connected=false;
-    float x,y;
+     float x,y;
     int type;
-    TextView textView;
     @SuppressLint("ClickableViewAccessibility")
     Block(MainActivity main, float x, float y,int type) {
         this.type = type;
         this.x=x;
         this.y=y;
         image = new ImageView(main);
-        textView = new TextView(main);
         this.x=x;
         this.y=y;
         setBlockXY(x,y);
-        image.setImageResource(R.drawable.cmd);
         switch (type){
             case (0):
-                textView.setText("вперед");
+                image.setImageResource(R.drawable.forward);
                 break;
             case (1):
-                textView.setText("направо");
+                image.setImageResource(R.drawable.right);
                 break;
             case (2):
-                textView.setText("налево");
+                image.setImageResource(R.drawable.left);
                 break;
         }
-        main.addContentView(image, new RelativeLayout.LayoutParams(size, size/2));
-        main.addContentView(textView,new RelativeLayout.LayoutParams(size*3/4,size*3/4));
+        main.addContentView(image, new RelativeLayout.LayoutParams(size, size));
         image.setOnTouchListener(new View.OnTouchListener()
         {@Override
         public boolean onTouch(View v, MotionEvent event)
@@ -49,6 +45,7 @@ public class Block {
         }
         });
     }
+    //установка координат с проверкой на присоединение
     Block setXY(float x,float y){
         this.x=x-size/2;
         this.y=y-size/2;
@@ -57,7 +54,7 @@ public class Block {
         for (Block block:MainActivity.robots[MainActivity.activeRobot].blocks){
             if(block.y ==this.y && block.x==this.x)
                 continue;
-            if(getRoundX()==block.getRoundX() &&  getRoundY()==block.getRoundY()) {
+            if(getRoundX()==block.getRoundX() &&  getRoundY()==block.getRoundY(size)) {
                 connected = true;
                 touched=false;
                 return block;
@@ -65,15 +62,16 @@ public class Block {
         }
         return null;
     }
+    //установка к предыдущему блоку
     void setXY(Block lastBlock){
         this.x = lastBlock.x;
-        this.y = lastBlock.y+lastBlock.size/2-lastBlock.size/6;
+        this.y = lastBlock.y+lastBlock.size;
         setBlockXY(this.x,this.y);
     }
-    int getRoundX(){
+    private int getRoundX(){
         return Math.round(x-x%100);
     }
-    int getRoundY(){
+    private int getRoundY(){
         return Math.round(y-y%100);
     }
     int getRoundY(int size){
@@ -82,19 +80,16 @@ public class Block {
     void delete(){
         FrameLayout parent = (FrameLayout) image.getParent();
         parent.removeView(image);
-        parent = (FrameLayout) textView.getParent();
-        parent.removeView(textView);
     }
     void hide(){
         image.setAlpha(0f);
-        textView.setAlpha(0f);
     }
     void show(){
         image.setAlpha(1f);
-        textView.setAlpha(1f);
     }
+    //чистая установка координат
     void setBlockXY(float x, float y){
-        image.setX(x);textView.setX(x+size/4);
-        image.setY(y);textView.setY(y+size/2/4);
+        image.setX(x);
+        image.setY(y);
     }
 }

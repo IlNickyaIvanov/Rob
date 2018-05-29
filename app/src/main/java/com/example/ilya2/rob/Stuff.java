@@ -47,8 +47,8 @@ public class Stuff {
     }
     int [] randomSqXY(){
         while(true){
-            int []sqXY={(int)Math.round(Math.random()*squares[0].length),
-                    (int)Math.round(Math.random()*squares.length)};
+            int []sqXY={(int)Math.round(Math.random()*(squares[0].length-1)),
+                    (int)Math.round(Math.random()*(squares.length-1))};
             boolean check=true;
             for (Robot robot:MainActivity.robots) {
                 if (robot.sqX==sqXY[0] && robot.sqY==sqXY[1])

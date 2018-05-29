@@ -27,15 +27,15 @@ public class CommandParser {
                             || direction[0] == -1 && x > 0 || direction[0] == 0)
                         x += direction[0];
                     else {
-                        if (direction[0] == 1) error = "Справа клеток нет!";
-                        else error = "Слева клеток нет!";
+//                        if (direction[0] == 1) error = "Справа клеток нет!";
+//                        else error = "Слева клеток нет!";
                     }
                     if (direction[1] == 1 && y < squares.length-1
                             || direction[1] == -1 && y > 0 || direction[1] == 0)
                         y += direction[1];
                     else {
-                        if (direction[1] == 1) error = "Внизу клеток нет!";
-                        else error = "Сверху клеток нет!";
+//                        if (direction[1] == 1) error = "Внизу клеток нет!";
+//                        else error = "Сверху клеток нет!";
                     }
                     int xy[] = {x, y};
                     moveXY.add(xy);
@@ -57,8 +57,8 @@ public class CommandParser {
                     moveXY.add(lxy);
                     break;
             }
-            if(error!=null)
-                break;
+//            if(error!=null)
+//                break;
         }
         return moveXY;
     }

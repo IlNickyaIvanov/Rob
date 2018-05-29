@@ -42,10 +42,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i=0;i<stuff.length;i++){
             stuff[i]=new Stuff(this,(int) Math.round(Math.random()),squares);
         }
-
         commands = new Command[3];
+        int step = screenHeight/6+(screenHeight*4/5-Command.size*commands.length)/2;
         for (int i=0;i<commands.length;i++) {
-            commands[i] = new Command(this,Command.size*i+2 , screenHeight-Command.size/2-5, i);
+            commands[i] = new Command(this,5 , step+i*(Command.size+10), i);
         }
     }
 
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
                         to=block.setXY(event.getX(), event.getY());
                         that=block;
                     }
-                }
+                }                //добавление обьекта в список в нужное место
                 if(to!=null){
                     robots[activeRobot].blocks.remove(that);
                     robots[activeRobot].blocks.add(robots[activeRobot].blocks.indexOf(to)+1,that);
@@ -142,7 +142,15 @@ public class MainActivity extends AppCompatActivity {
             case MotionEvent.ACTION_UP:
                 boolean ok = false;
                 while(!ok) {
-                    for (Block block : robots[activeRobot].blocks) {
+                    if(robots[activeRobot].blocks.size()==1){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
+                        for (Command com: commands)
+                            if(com.isUnderBlock(robots[activeRobot].blocks.get(0))) {
+                                robots[activeRobot].blocks.get(0).delete();
+                                robots[activeRobot].blocks.remove(robots[activeRobot].blocks.get(0));
+                                break;
+                            }
+                    }
+                   for (Block block : robots[activeRobot].blocks) {
                         if (!block.connected && robots[activeRobot].blocks.size() > 1) {
                             block.delete();
                             robots[activeRobot].blocks.remove(block);
@@ -157,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
      void refreshBlocks(){
-
+        //ориентация всего блока команд по первому
         for(int i=1;i<robots[activeRobot].blocks.size();i++){
             robots[activeRobot].blocks.get(i).setXY(robots[activeRobot].blocks.get(i-1));
         }

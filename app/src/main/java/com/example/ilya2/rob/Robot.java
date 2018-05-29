@@ -95,6 +95,7 @@ public class Robot {
                 rotation+=speedRotate;
                 image.setRotation(rotation);
                 if(Math.round(rotation)==Math.round(targetAngle)){
+                    image.setRotation(Math.round(targetAngle));
                     anim=false;
                     speedRotate=0;
                 }
@@ -109,7 +110,7 @@ public class Robot {
         if(moveXY.size()>0){
             int[]xy=moveXY.poll();
             if(xy.length>1)
-                RobotMove(xy[0],xy[1]);
+                RobotMove(xy[0],xy[1]);//moveXY - это очередь в которой заданы положения робота[2] или повороты[1]
             else {
                 targetAngle=rotation+xy[0];
                 speedRotate=xy[0]/40;
