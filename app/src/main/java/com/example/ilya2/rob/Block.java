@@ -50,8 +50,8 @@ public class Block {
         this.x=x-size/2;
         this.y=y-size/2;
         setBlockXY(this.x,this.y);
-        connected = MainActivity.robots[MainActivity.activeRobot].blocks.size() == 1;
-        for (Block block:MainActivity.robots[MainActivity.activeRobot].blocks){
+        connected = MainActivity.blocks.size() == 1;
+        for (Block block:MainActivity.blocks){
             if(block.y ==this.y && block.x==this.x)
                 continue;
             if(getRoundX()==block.getRoundX() &&  getRoundY()==block.getRoundY(size)) {

@@ -23,15 +23,15 @@ public class CommandParser {
         for (Block block : blocks) {
             switch (block.type) {
                 case (0):
-                    if (direction[0] == 1 && x < squares[0].length-1
-                            || direction[0] == -1 && x > 0 || direction[0] == 0)
+                    if ((direction[0] == 1 && x < squares[0].length-1
+                            || direction[0] == -1 && x > 0)&&squares[y][x+direction[0]].ID_NUMBER!=2 || direction[0] == 0)
                         x += direction[0];
                     else {
 //                        if (direction[0] == 1) error = "Справа клеток нет!";
 //                        else error = "Слева клеток нет!";
                     }
-                    if (direction[1] == 1 && y < squares.length-1
-                            || direction[1] == -1 && y > 0 || direction[1] == 0)
+                    if ((direction[1] == 1 && y < squares.length-1
+                            || direction[1] == -1 && y > 0)&&squares[y][x+direction[0]].ID_NUMBER!=2 || direction[1] == 0)
                         y += direction[1];
                     else {
 //                        if (direction[1] == 1) error = "Внизу клеток нет!";

@@ -7,6 +7,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.RotateAnimation;
 import android.view.animation.TranslateAnimation;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -15,6 +16,9 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class Robot {
+
+    boolean broken=false;
+
     private float x, y;
     int sqX, sqY,rotation=0,turn=1;
     private float speedX,targetX,speedY,targetY;
@@ -23,7 +27,6 @@ public class Robot {
     private int onTickMove=1000/60;
     ImageView image;
     static int size=50;
-    ArrayList<Block> blocks;
     private Queue<int[]> moveXY;
     private CommandParser comPars;
     private Activity activity;
@@ -32,7 +35,6 @@ public class Robot {
         this.activity=main;
         this.turn = turn;
         comPars = new CommandParser(squares,sqX,sqY,turn);
-        blocks = new ArrayList<>();
         moveXY = new LinkedList<>();
         size = Square.size;
         image = new ImageView(main);
@@ -53,6 +55,11 @@ public class Robot {
     }
     //метод, отвечающй за перемещение
     void RobotMove(final int sqX, final int sqY) {
+        if(sqX==MainActivity.hunter.sqX&&sqY==MainActivity.hunter.sqY) {
+            broken = true;
+            setAlpha(0.5f);
+            MainActivity.hunter.findNewActiveRobot();
+        }
         anim = true;
         float x=MainActivity.squares[sqY][sqX].x;
         float y=MainActivity.squares[sqY][sqX].y;
@@ -62,9 +69,13 @@ public class Robot {
         speedY=(y-this.y)/40;
         this.sqX = sqX;
         this.sqY = sqY;
-        for (Stuff stuff: MainActivity.stuff)
-            if(stuff.sqX == sqX && stuff.sqY==sqY)
+        boolean gameOver=true;
+        for (Stuff stuff: MainActivity.stuff) {
+            if (stuff.sqX == sqX && stuff.sqY == sqY)
                 stuff.open();
+            gameOver=gameOver&&stuff.opened;
+        }
+        if(gameOver)Utils.AlertDialog(activity,"Конец игры","Вы победили","Еще раз");
 
     }
 
@@ -103,7 +114,7 @@ public class Robot {
         }
     }
 
-    void execute(){
+    void execute(ArrayList<Block> blocks){
         moveXY = comPars.parser(blocks);
     }
     boolean move(){
@@ -122,6 +133,13 @@ public class Robot {
             comPars.error=null;
         }
         return moveXY.size()==0;
+    }
+    void setAlpha(float alpha){
+        image.setAlpha(alpha);
+    }
+    void delete(){
+        FrameLayout parent = (FrameLayout) image.getParent();
+        parent.removeView(image);
     }
     class MyTimer extends CountDownTimer {
         MyTimer() {

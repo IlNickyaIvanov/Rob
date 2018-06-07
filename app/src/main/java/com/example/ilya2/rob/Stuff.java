@@ -53,6 +53,10 @@ public class Stuff {
             for (Robot robot:MainActivity.robots) {
                 if (robot.sqX==sqXY[0] && robot.sqY==sqXY[1])
                     check=false;
+            if(MainActivity.hunter.sqX==sqXY[0]&&MainActivity.hunter.sqY==sqXY[1])
+                check=false;
+            if(squares[sqXY[1]][sqXY[0]].ID_NUMBER==2)
+                check=false;
             }
             if(check)return sqXY;
         }

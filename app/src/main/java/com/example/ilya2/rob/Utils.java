@@ -11,7 +11,7 @@ class Utils {
     static void makeToast(Activity main, String text){
         Toast.makeText(main,text,Toast.LENGTH_SHORT).show();
     }
-    public static void AlertDialog(Activity main, String title, String Message, String TextButton ){
+    public static void AlertDialog(final Activity main, String title, String Message, String TextButton ){
         MainActivity.AlertDialogMessage=null;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(main);
@@ -28,6 +28,7 @@ class Utils {
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
+                                MainActivity.startGame(main);
                                 ADVisible=false;
                             }
                         });
