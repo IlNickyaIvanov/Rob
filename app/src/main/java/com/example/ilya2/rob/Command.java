@@ -5,17 +5,16 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 public class Command {
     ImageView image;
-    static int size= (int) Math.round(MainActivity.screenHeight/MainActivity.commands.length/1.5-50), alpha; // размер картинки, врещение, прозрачность
+    static int size= (int) Math.round(GameActivity.screenHeight/ GameActivity.commands.length/1.5-50), alpha; // размер картинки, врещение, прозрачность
     boolean touched=false;
     float x,y;
     int type;
     String text;
     @SuppressLint("ClickableViewAccessibility")
-    Command(final MainActivity main, final float x, final float y,int type) {
+    Command(final GameActivity main, final float x, final float y, int type) {
         this.type =type;
         image = new ImageView(main);
         this.x=x;image.setX(x);

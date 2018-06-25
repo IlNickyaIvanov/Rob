@@ -20,6 +20,7 @@ public class CommandParser {
     }
 
     Queue<int[]> parser(ArrayList<Block> blocks){
+        squares = GameActivity.squares.clone();
         for (Block block : blocks) {
             switch (block.type) {
                 case (0):
@@ -31,7 +32,7 @@ public class CommandParser {
 //                        else error = "Слева клеток нет!";
                     }
                     if ((direction[1] == 1 && y < squares.length-1
-                            || direction[1] == -1 && y > 0)&&squares[y][x+direction[0]].ID_NUMBER!=2 || direction[1] == 0)
+                            || direction[1] == -1 && y > 0)&&squares[y+direction[1]][x].ID_NUMBER!=2 || direction[1] == 0)
                         y += direction[1];
                     else {
 //                        if (direction[1] == 1) error = "Внизу клеток нет!";

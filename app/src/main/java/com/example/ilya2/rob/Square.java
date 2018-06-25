@@ -1,6 +1,7 @@
 package com.example.ilya2.rob;
 
 import android.app.Activity;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -22,4 +23,8 @@ import android.widget.RelativeLayout;
         this.x = x;
         this.y = y;
     }
+     void delete(){
+            FrameLayout parent = (FrameLayout) image.getParent();
+            parent.removeView(image);
+     }
 }

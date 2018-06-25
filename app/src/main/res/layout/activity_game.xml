@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".GameActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -33,17 +33,8 @@
                     android:layout_height="match_parent"
                     android:layout_weight="2"
                     android:background="@android:color/holo_green_dark"
-                    android:onClick="onPrevious"
-                    android:text="previous" />
-
-                <Button
-                    android:id="@+id/start"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@android:color/holo_green_dark"
-                    android:onClick="onStart"
-                    android:text="пуск" />
+                    android:onClick="onPassStep"
+                    android:text="pass>>" />
 
                 <Button
                     android:id="@+id/next"
@@ -51,8 +42,17 @@
                     android:layout_height="match_parent"
                     android:layout_weight="2"
                     android:background="@android:color/holo_green_dark"
-                    android:onClick="onNext"
-                    android:text="next" />
+                    android:onClick="onNextStep"
+                    android:text="step>" />
+
+                <TextView
+                    android:id="@+id/stepLim"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2"
+                    android:background="@android:color/holo_orange_dark"
+                    android:gravity="center"
+                    android:text="stepLIM=1" />
 
             </LinearLayout>
             <Space

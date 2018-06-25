@@ -44,7 +44,7 @@ class KodParser {
         text = text.replaceAll("\n", "");
         this.text = text;
         if (text.replaceAll("\n", "").replaceAll(";", "").isEmpty()) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.wh_com);
+            GameActivity.AlertDialogMessage = activity.getString(R.string.wh_com);
             pause = true;
             kodERROR = true;
         } else try {
@@ -53,7 +53,7 @@ class KodParser {
                 line = text.replaceAll("\n", "").split(";");
                 MainLine = text.split(";");
             } catch (Throwable t) {//выделение подстрок по символу ";"
-                MainActivity.AlertDialogMessage = activity.getString(R.string.ch_del);
+                GameActivity.AlertDialogMessage = activity.getString(R.string.ch_del);
                 kodERROR = true;
                 return action;
             }
@@ -76,7 +76,7 @@ class KodParser {
                     try {
                         cOmAnD = cOmAnD.substring(0, line[i].indexOf("(")).trim();
                     } catch (Throwable t) {
-                        MainActivity.AlertDialogMessage = activity.getString(R.string.bad_cond);
+                        GameActivity.AlertDialogMessage = activity.getString(R.string.bad_cond);
                         SELECTOR(MainLine[i], text, symbolslENGTH);
                         kodERROR = true;
                     }
@@ -88,7 +88,7 @@ class KodParser {
                 else loop = false;
             }
         } catch (Throwable t) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.ch_com);
+            GameActivity.AlertDialogMessage = activity.getString(R.string.ch_com);
             kodERROR = true;
         }
         symbolslENGTH = 0;
@@ -107,7 +107,7 @@ class KodParser {
                         Anim[action] = 5;
                     else if (!pause) {
                         pause = true;
-                        MainActivity.AlertDialogMessage = activity.getString(R.string.no_food);
+                        GameActivity.AlertDialogMessage = activity.getString(R.string.no_food);
                     }
                     break;
                 case "up":
@@ -115,7 +115,7 @@ class KodParser {
                     else if (!pause) {
                         pause = true;
                         if (IS_LAVA(-1, 0, false))
-                            MainActivity.AlertDialogMessage = activity.getString(R.string.up) + MainActivity.AlertDialogMessage;
+                            GameActivity.AlertDialogMessage = activity.getString(R.string.up) + GameActivity.AlertDialogMessage;
                     }
                     break;
                 case "down":
@@ -123,7 +123,7 @@ class KodParser {
                     else if (!pause) {
                         pause = true;
                         if (IS_LAVA(1, 0, false))
-                            MainActivity.AlertDialogMessage = "" + activity.getString(R.string.down) + MainActivity.AlertDialogMessage;
+                            GameActivity.AlertDialogMessage = "" + activity.getString(R.string.down) + GameActivity.AlertDialogMessage;
                     }
                     break;
                 case "right":
@@ -131,7 +131,7 @@ class KodParser {
                     else if (!pause) {
                         pause = true;
                         if (IS_LAVA(0, 1, false))
-                            MainActivity.AlertDialogMessage = "" + activity.getString(R.string.right) + MainActivity.AlertDialogMessage;
+                            GameActivity.AlertDialogMessage = "" + activity.getString(R.string.right) + GameActivity.AlertDialogMessage;
                     }
                     break;
                 case "left":
@@ -139,7 +139,7 @@ class KodParser {
                     else if (!pause) {
                         pause = true;
                         if (IS_LAVA(0, -1, false))
-                            MainActivity.AlertDialogMessage = "" + activity.getString(R.string.left) + MainActivity.AlertDialogMessage;
+                            GameActivity.AlertDialogMessage = "" + activity.getString(R.string.left) + GameActivity.AlertDialogMessage;
 
                     }
                     break;
@@ -189,7 +189,7 @@ class KodParser {
             }
             //по умолчанию, в игре максимум - 100 положений робота. Но при желании, можно, конечно, и увеличить.
             if (action == ARx.length - 1) {
-                MainActivity.AlertDialogMessage = (activity.getString(R.string.com_lim));
+                GameActivity.AlertDialogMessage = (activity.getString(R.string.com_lim));
                 kodERROR = true;
             }
             ARx[action] = x;
@@ -241,7 +241,7 @@ class KodParser {
             while (dir_text.equals("not"));
             //Еще одна проверка на INFINITY. Практика показала, что и здесь вылетают ошибки
             if (action == ARx.length - 1) {
-                MainActivity.AlertDialogMessage = (activity.getString(R.string.com_lim));
+                GameActivity.AlertDialogMessage = (activity.getString(R.string.com_lim));
                 kodERROR = true;
                 return false;
             }
@@ -255,7 +255,7 @@ class KodParser {
                 result = IS_FOOD(dY, dX);
             if (isNOT) result = !result;
         } catch (Throwable t) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.bad_cond) + text;
+            GameActivity.AlertDialogMessage = activity.getString(R.string.bad_cond) + text;
             kodERROR = true;
         }
         return result;
@@ -299,13 +299,13 @@ class KodParser {
     //проверка на ';'
     private boolean CHECK_DELIMITOR(String line, String OriginLine, String text) {
         if (line.equals("")) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.exc);
+            GameActivity.AlertDialogMessage = activity.getString(R.string.exc);
             SELECTOR(OriginLine, text, symbolslENGTH);
             kodERROR = true;
             return true;
         } else if (!line.contains("repeat") && !line.contains("if") && !line.contains("while")
                 && line.contains("(") && line.contains(")") && !line.endsWith(")")) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.after) + line.substring(0, line.indexOf(")") + 1) + activity.getString(R.string.wait);
+            GameActivity.AlertDialogMessage = activity.getString(R.string.after) + line.substring(0, line.indexOf(")") + 1) + activity.getString(R.string.wait);
             SELECTOR(OriginLine, text, symbolslENGTH);
             stop = symbolslENGTH + OriginLine.indexOf(")") + 1;
             kodERROR = true;
@@ -318,7 +318,7 @@ class KodParser {
                 && !cOmAnD.equals("left") && !cOmAnD.equals("right")
                 && !cOmAnD.equals("repeat") && !cOmAnD.equals("if")
                 && !cOmAnD.equals("while") && !cOmAnD.equals("eat")) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.unknown) + cOmAnD;
+            GameActivity.AlertDialogMessage = activity.getString(R.string.unknown) + cOmAnD;
             SELECTOR(OriginLine, text, symbolslENGTH);
             kodERROR = true;
             return true;
@@ -331,7 +331,7 @@ class KodParser {
             num = Integer.valueOf(line.substring(line.indexOf('(') + 1, line.indexOf(')')));
             return num;
         } catch (NumberFormatException e) {
-            MainActivity.AlertDialogMessage = activity.getString(R.string.unkn_num);
+            GameActivity.AlertDialogMessage = activity.getString(R.string.unkn_num);
             if (OriginLine.contains("("))
                 start = symbolslENGTH + OriginLine.indexOf("(");
             else start = symbolslENGTH + line.length() - 1;
@@ -370,23 +370,23 @@ class KodParser {
         if (dY < 0 || dY > square.length - 1) {
             is_LAVA = true;
             if (!justCheck)
-                MainActivity.AlertDialogMessage = activity.getString(R.string.no_sq);
+                GameActivity.AlertDialogMessage = activity.getString(R.string.no_sq);
         } else if (dX < 0 || dX > square[dY].length - 1) {
             is_LAVA = true;
             if (!justCheck)
-                MainActivity.AlertDialogMessage = activity.getString(R.string.no_sq);
+                GameActivity.AlertDialogMessage = activity.getString(R.string.no_sq);
         } else if (square[dY][dX].ID_NUMBER == 1) {
             is_LAVA = true;
             if (!justCheck)
-                MainActivity.AlertDialogMessage = activity.getString(R.string.lava);
+                GameActivity.AlertDialogMessage = activity.getString(R.string.lava);
         } else if (square[dY][dX].ID_NUMBER == 2) {
             is_LAVA = true;
             if (!justCheck)
-                MainActivity.AlertDialogMessage = activity.getString(R.string.kisl);
+                GameActivity.AlertDialogMessage = activity.getString(R.string.kisl);
         } else if (!square[dY][dX].isVISIBLE) {
             is_LAVA = true;
             if (!justCheck)
-                MainActivity.AlertDialogMessage = activity.getString(R.string.sq_dis);
+                GameActivity.AlertDialogMessage = activity.getString(R.string.sq_dis);
         }
         return (is_LAVA);
     }
@@ -398,7 +398,7 @@ class KodParser {
         int index = MainLine[LoopElement].replaceAll(" ", "").indexOf(")");
         String test = MainLine[LoopElement].replaceAll(" ", "").substring(index, index + 2);
         if (!test.equals("){")) {
-            MainActivity.AlertDialogMessage = (activity.getString(R.string.misd_op));
+            GameActivity.AlertDialogMessage = (activity.getString(R.string.misd_op));
             SELECTOR(MainLine[LoopElement], text, symbolslENGTH);
             kodERROR = true;
         }
@@ -427,7 +427,7 @@ class KodParser {
                 } else break;
             } else if (line[i].contains("}")) enLOOP_EXIST = false;
         }
-        MainActivity.AlertDialogMessage = (activity.getString(R.string.misd_cl));
+        GameActivity.AlertDialogMessage = (activity.getString(R.string.misd_cl));
         SELECTOR(MainLine[LoopElement], text, symbolslENGTH);
         kodERROR = true;
 
@@ -449,7 +449,7 @@ class KodParser {
                 elnum++;
                 elsenum.add(idetifyBODY(MainLine, elsenum.get(elnum - 1), text) + elsenum.get(elnum - 1));
             } else {
-                MainActivity.AlertDialogMessage = activity.getString(R.string.wait_else) + MainLine[elsenum.get(elnum)];
+                GameActivity.AlertDialogMessage = activity.getString(R.string.wait_else) + MainLine[elsenum.get(elnum)];
                 SELECTOR(MainLine[LoopElement], this.text, symbolslENGTH);
                 kodERROR = true;
                 return -1;
@@ -473,7 +473,7 @@ class KodParser {
                         break;
                     }
                 } catch (Throwable t) {
-                    MainActivity.AlertDialogMessage = activity.getString(R.string.bad_cond);
+                    GameActivity.AlertDialogMessage = activity.getString(R.string.bad_cond);
                     break;
                 }
             } else if (i != elsenum.size() - 1) {
@@ -493,14 +493,14 @@ class KodParser {
             if (line.substring(line.indexOf("}") + 1, line.indexOf("i")).trim().equals("else"))
                 result = true;
             else {
-                MainActivity.AlertDialogMessage = activity.getString(R.string.bad_cond) + line;
+                GameActivity.AlertDialogMessage = activity.getString(R.string.bad_cond) + line;
                 System.out.println("неизвестная команда");
             }
         } else {
             if (line.substring(line.indexOf("}") + 1, line.indexOf("{")).trim().equals("else"))
                 result = true;
             else {
-                MainActivity.AlertDialogMessage = activity.getString(R.string.bad_cond) + line;
+                GameActivity.AlertDialogMessage = activity.getString(R.string.bad_cond) + line;
                 System.out.println("неизвестная команда");
             }
         }

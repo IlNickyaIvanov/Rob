@@ -4,9 +4,6 @@ import android.app.Activity;
 import android.os.CountDownTimer;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.animation.RotateAnimation;
-import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -17,7 +14,7 @@ import java.util.Queue;
 
 public class Robot {
 
-    boolean broken=false;
+    boolean broken=false;//сломан ли робот
 
     private float x, y;
     int sqX, sqY,rotation=0,turn=1;
@@ -38,8 +35,8 @@ public class Robot {
         moveXY = new LinkedList<>();
         size = Square.size;
         image = new ImageView(main);
-        float x = MainActivity.squares[sqY][sqX].x;
-        float y = MainActivity.squares[sqY][sqX].y;
+        float x = GameActivity.squares[sqY][sqX].x;
+        float y = GameActivity.squares[sqY][sqX].y;
         image.setX(x); // координаты
         image.setY(y);
         image.setImageResource(R.drawable.robo);
@@ -55,27 +52,38 @@ public class Robot {
     }
     //метод, отвечающй за перемещение
     void RobotMove(final int sqX, final int sqY) {
-        if(sqX==MainActivity.hunter.sqX&&sqY==MainActivity.hunter.sqY) {
+        if(sqX== GameActivity.hunter.sqX&&sqY== GameActivity.hunter.sqY) {
             broken = true;
             setAlpha(0.5f);
-            MainActivity.hunter.findNewActiveRobot();
+            GameActivity.hunter.findNewActiveRobot();
         }
         anim = true;
-        float x=MainActivity.squares[sqY][sqX].x;
-        float y=MainActivity.squares[sqY][sqX].y;
+        float x= GameActivity.squares[sqY][sqX].x;
+        float y= GameActivity.squares[sqY][sqX].y;
         targetX=x;
         targetY=y;
         speedX=(x-this.x)/40;
         speedY=(y-this.y)/40;
         this.sqX = sqX;
         this.sqY = sqY;
+
         boolean gameOver=true;
-        for (Stuff stuff: MainActivity.stuff) {
-            if (stuff.sqX == sqX && stuff.sqY == sqY)
+        for (Stuff stuff: GameActivity.stuff) {
+            if (stuff.sqX == sqX && stuff.sqY == sqY && !stuff.opened) {
+                GameActivity.comLim+=1;
                 stuff.open();
+            }
             gameOver=gameOver&&stuff.opened;
         }
-        if(gameOver)Utils.AlertDialog(activity,"Конец игры","Вы победили","Еще раз");
+        for (Robot robot: GameActivity.robots)
+            if(sqX==robot.sqX&&sqY==robot.sqY) {
+                robot.broken = false;
+                robot.setAlpha(1f);
+            }
+        if(gameOver && !GameActivity.gameOver && !Tutorial.isTutorial){
+            Utils.AlertDialog(activity,"Конец игры","Вы победили","Еще раз");
+            GameActivity.gameOver=true;
+        }
 
     }
 
@@ -138,8 +146,12 @@ public class Robot {
         image.setAlpha(alpha);
     }
     void delete(){
-        FrameLayout parent = (FrameLayout) image.getParent();
-        parent.removeView(image);
+        stopAnim();
+        broken = true;
+        try{
+            FrameLayout parent = (FrameLayout) image.getParent();
+            parent.removeView(image);
+        }catch (Throwable t){}
     }
     class MyTimer extends CountDownTimer {
         MyTimer() {

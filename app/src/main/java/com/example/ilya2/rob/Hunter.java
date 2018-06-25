@@ -1,7 +1,6 @@
 package com.example.ilya2.rob;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.os.CountDownTimer;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -27,8 +26,8 @@ public class Hunter {
     Hunter(Activity main, int sqX, int sqY,int[][]map) {
         this.map=new int[map.length][map[0].length];
         size = Square.size;
-        float x = MainActivity.squares[sqX][sqY].x;
-        float y = MainActivity.squares[sqX][sqY].y;
+        float x = GameActivity.squares[sqX][sqY].x;
+        float y = GameActivity.squares[sqX][sqY].y;
         activity=main;
         image = new ImageView(main);
         image.setX(x); // координаты
@@ -44,10 +43,10 @@ public class Hunter {
     }
     //вызывать после окончания передвежения робота
     void hunt(){
-        for(int i=0;i<MainActivity.map.length;i++)
-            for (int j=0;j<MainActivity.map[i].length;j++)
-                map[i][j]=MainActivity.map[i][j];
-        for (Robot robot:MainActivity.robots)
+        for(int i = 0; i< GameActivity.map.length; i++)
+            for (int j = 0; j< GameActivity.map[i].length; j++)
+                map[i][j]= GameActivity.map[i][j];
+        for (Robot robot: GameActivity.robots)
             if(!robot.broken)
                 map[robot.sqY][robot.sqX]=1;
         moveXY=waveAlg(sqX,sqY,map);
@@ -111,14 +110,14 @@ public class Hunter {
         if(moveXY.size()==0)return true;
         anim = true;
         int xy[]=moveXY.poll();
-        for (Robot robot:MainActivity.robots)
+        for (Robot robot: GameActivity.robots)
             if(xy[0]==robot.sqX&&xy[1]==robot.sqY) {
                 robot.broken = true;
                 robot.setAlpha(0.5f);
                 findNewActiveRobot();
             }
-        float x=MainActivity.squares[xy[1]][xy[0]].x;
-        float y=MainActivity.squares[xy[1]][xy[0]].y;
+        float x= GameActivity.squares[xy[1]][xy[0]].x;
+        float y= GameActivity.squares[xy[1]][xy[0]].y;
         targetX=(x);
         targetY=(y);
         speedX=(x-this.x)/40;
@@ -140,19 +139,34 @@ public class Hunter {
     }
 
     void delete(){
-        FrameLayout parent = (FrameLayout) image.getParent();
-        parent.removeView(image);
+        if(image!=null){
+            FrameLayout parent = (FrameLayout) image.getParent();
+            parent.removeView(image);
+            image = null;
+        }
+    }
+
+    void setXY(int x, int y){
+        anim=false;
+        sqX = x;
+        sqY = y;
+        this.x = GameActivity.squares[sqY][sqX].x;
+        this.y = GameActivity.squares[sqY][sqX].y;
+        image.setX(this.x);
+        image.setY(this.y);
     }
 
     void findNewActiveRobot(){
-        for(int i=0;i<MainActivity.robots.length;i++) {
-            if (!MainActivity.robots[i].broken){
-                MainActivity.activeRobot = i;
+        for(int i = 0; i< GameActivity.robots.length; i++) {
+            if (!GameActivity.robots[i].broken){
+                GameActivity.activeRobot = i;
                 break;
             }
             //конец игры, охотник всех поймал
-            if(i==MainActivity.robots.length-1)
+            if(i== GameActivity.robots.length-1 && !GameActivity.gameOver && !Tutorial.isTutorial) {
                 Utils.AlertDialog(activity, "Конец игры", "Охотник всех поймал", "Еще раз");
+                GameActivity.gameOver=true;
+            }
 
         }
     }
