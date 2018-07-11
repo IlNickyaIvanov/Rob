@@ -8,6 +8,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -17,9 +18,9 @@ public class Robot {
     boolean broken=false;//сломан ли робот
 
     private float x, y;
-    int sqX, sqY,rotation=0,turn=1;
+    int sqX, sqY;
     private float speedX,targetX,speedY,targetY;
-    private int speedRotate,targetAngle;
+    private int speedRotate,targetAngle,rotation;
     boolean anim=false;
     private int onTickMove=1000/60;
     ImageView image;
@@ -27,12 +28,12 @@ public class Robot {
     private Queue<int[]> moveXY;
     private CommandParser comPars;
     private Activity activity;
+    private final int speed=40;
 
     Robot(Activity main, int sqX, int sqY,int turn,Square squares[][]) {
         this.activity=main;
-        this.turn = turn;
         comPars = new CommandParser(squares,sqX,sqY,turn);
-        moveXY = new LinkedList<>();
+        moveXY = new ArrayDeque<>();
         size = Square.size;
         image = new ImageView(main);
         float x = GameActivity.squares[sqY][sqX].x;
@@ -48,11 +49,13 @@ public class Robot {
         MyTimer timer = new MyTimer();
         timer.start();
         rotation=90*(turn-1);
+        targetAngle=rotation;
         image.setRotation(rotation);
     }
     //метод, отвечающй за перемещение
     void RobotMove(final int sqX, final int sqY) {
         if(sqX== GameActivity.hunter.sqX&&sqY== GameActivity.hunter.sqY) {
+            moveXY.clear();
             broken = true;
             setAlpha(0.5f);
             GameActivity.hunter.findNewActiveRobot();
@@ -62,29 +65,28 @@ public class Robot {
         float y= GameActivity.squares[sqY][sqX].y;
         targetX=x;
         targetY=y;
-        speedX=(x-this.x)/40;
-        speedY=(y-this.y)/40;
+        speedX=(x-this.x)/speed;
+        speedY=(y-this.y)/speed;
         this.sqX = sqX;
         this.sqY = sqY;
 
         boolean gameOver=true;
-        for (Stuff stuff: GameActivity.stuff) {
-            if (stuff.sqX == sqX && stuff.sqY == sqY && !stuff.opened) {
+        for (int i=0;i<GameActivity.stuff.length;++i){
+            if (GameActivity.stuff[i].sqX == sqX && GameActivity.stuff[i].sqY == sqY && !GameActivity.stuff[i].opened) {
                 GameActivity.comLim+=1;
-                stuff.open();
+                GameActivity.stuff[i].open();
             }
-            gameOver=gameOver&&stuff.opened;
+            gameOver=gameOver&&GameActivity.stuff[i].opened;
         }
-        for (Robot robot: GameActivity.robots)
-            if(sqX==robot.sqX&&sqY==robot.sqY) {
-                robot.broken = false;
-                robot.setAlpha(1f);
+        for(int i=0;i<GameActivity.robots.length;++i)
+            if(GameActivity.robots[i].broken && sqX==GameActivity.robots[i].sqX&&sqY==GameActivity.robots[i].sqY) {
+                GameActivity.robots[i].broken = false;
+                GameActivity.robots[i].setAlpha(1f);
             }
         if(gameOver && !GameActivity.gameOver && !Tutorial.isTutorial){
             Utils.AlertDialog(activity,"Конец игры","Вы победили","Еще раз");
             GameActivity.gameOver=true;
         }
-
     }
 
     void startAnim(){
@@ -99,22 +101,26 @@ public class Robot {
     }
 
     void update(){
-        if(anim){
+        if(anim && !GameActivity.gameOver){
             if(targetX!=0 && targetY!=0) {
                 if (Math.round(x) != Math.round(targetX)) x += speedX;
                 if (Math.round(y) != Math.round(targetY)) y += speedY;
                 if (Math.round(x) == Math.round(targetX) && Math.round(y) == Math.round(targetY)) {
                     anim = false;
+                    x = targetX;
+                    y = targetY;
                     targetX = 0;
                     targetY = 0;
                 }
                 image.setX(x);
                 image.setY(y);
-            }else {
+            }
+            if(targetAngle!=rotation){
                 rotation+=speedRotate;
                 image.setRotation(rotation);
-                if(Math.round(rotation)==Math.round(targetAngle)){
-                    image.setRotation(Math.round(targetAngle));
+                if(rotation==targetAngle){
+                    rotation = 90*(targetAngle/90);
+                    image.setRotation(targetAngle);
                     anim=false;
                     speedRotate=0;
                 }
@@ -126,21 +132,18 @@ public class Robot {
         moveXY = comPars.parser(blocks);
     }
     boolean move(){
-        if(moveXY.size()>0){
+        if(!broken && moveXY.size()>0){
             int[]xy=moveXY.poll();
             if(xy.length>1)
                 RobotMove(xy[0],xy[1]);//moveXY - это очередь в которой заданы положения робота[2] или повороты[1]
             else {
+                image.setRotation(90*(targetAngle/90));
                 targetAngle=rotation+xy[0];
-                speedRotate=xy[0]/40;
+                speedRotate=xy[0]/speed;
                 anim=true;
             }
         }
-        if(moveXY.size()==0 && comPars.error!=null){
-            Utils.AlertDialog(activity,"Ошибка",comPars.error,"ок");
-            comPars.error=null;
-        }
-        return moveXY.size()==0;
+        return broken || moveXY.size()==0;
     }
     void setAlpha(float alpha){
         image.setAlpha(alpha);

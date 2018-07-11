@@ -21,7 +21,7 @@ public class Hunter {
     private int map[][];//карта 0-пустая 1-цели 2-стены
     Queue<int[]>moveXY=new LinkedList<>();
     int steps=0;
-    Activity activity;
+    private Activity activity;
 
     Hunter(Activity main, int sqX, int sqY,int[][]map) {
         this.map=new int[map.length][map[0].length];
@@ -44,18 +44,17 @@ public class Hunter {
     //вызывать после окончания передвежения робота
     void hunt(){
         for(int i = 0; i< GameActivity.map.length; i++)
-            for (int j = 0; j< GameActivity.map[i].length; j++)
-                map[i][j]= GameActivity.map[i][j];
-        for (Robot robot: GameActivity.robots)
-            if(!robot.broken)
-                map[robot.sqY][robot.sqX]=1;
+            System.arraycopy(GameActivity.map[i], 0, map[i], 0, GameActivity.map[i].length);
+        for (int i=0; i<GameActivity.robots.length;i++)
+            if(!GameActivity.robots[i].broken)
+                map[GameActivity.robots[i].sqY][GameActivity.robots[i].sqX]=1;
         moveXY=waveAlg(sqX,sqY,map);
     }
 
 
     //метод, реализующий волновой алгоритм на Java
     //на вход даются начальные координаты и карта(где 1-цели, 2-стены)
-    static Queue<int[]> waveAlg(int x, int y, int map[][]){
+    private static Queue<int[]> waveAlg(int x, int y, int map[][]){
         Queue<String> ways = new LinkedList<>(); //пути до клеток
         ArrayList<String> checked= new ArrayList<>();//проверенные клетки
         Queue<int[]> wave = new LinkedList<>();//очередь на проверку
@@ -128,13 +127,15 @@ public class Hunter {
         if(steps==0)moveXY.clear();
         return steps==0;
     }
-    void update(){
-        if(anim){
+    private void update(){
+        if(anim && !GameActivity.gameOver){
             if(Math.round(x)!=Math.round(targetX))x+=speedX;
             if(Math.round(y)!=Math.round(targetY))y+=speedY;
             if(Math.round(x)==Math.round(targetX) && Math.round(y)==Math.round(targetY)) anim=false;
-            image.setX(x);
-            image.setY(y);
+            if(image!=null) {
+                image.setX(x);
+                image.setY(y);
+            }
         }
     }
 
@@ -146,10 +147,10 @@ public class Hunter {
         }
     }
 
-    void setXY(int x, int y){
+    void setXY(){
         anim=false;
-        sqX = x;
-        sqY = y;
+        sqX = 2;
+        sqY = 2;
         this.x = GameActivity.squares[sqY][sqX].x;
         this.y = GameActivity.squares[sqY][sqX].y;
         image.setX(this.x);
@@ -157,18 +158,22 @@ public class Hunter {
     }
 
     void findNewActiveRobot(){
-        for(int i = 0; i< GameActivity.robots.length; i++) {
-            if (!GameActivity.robots[i].broken){
-                GameActivity.activeRobot = i;
-                break;
+        int i=-1;
+        if(GameActivity.robots[GameActivity.activeRobot].broken){
+            i=GameActivity.activeRobot;
+            do {
+                if (i == GameActivity.robots.length - 1) i = 0;
+                else i += 1;
+                //конец игры, охотник всех поймал
+                if(i== GameActivity.activeRobot)break;
             }
-            //конец игры, охотник всех поймал
-            if(i== GameActivity.robots.length-1 && !GameActivity.gameOver && !Tutorial.isTutorial) {
-                Utils.AlertDialog(activity, "Конец игры", "Охотник всех поймал", "Еще раз");
-                GameActivity.gameOver=true;
-            }
-
+            while (GameActivity.robots[i].broken);
         }
+        if(i== GameActivity.activeRobot && !GameActivity.gameOver && !Tutorial.isTutorial) {
+            Utils.AlertDialog(activity, "Конец игры", "Охотник всех поймал", "Еще раз");
+            GameActivity.gameOver=true;
+        }
+        else if(i!=-1) GameActivity.activeRobot = i;
     }
 
     class MyTimer extends CountDownTimer {

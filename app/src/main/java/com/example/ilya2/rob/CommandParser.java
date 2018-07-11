@@ -27,17 +27,9 @@ public class CommandParser {
                     if ((direction[0] == 1 && x < squares[0].length-1
                             || direction[0] == -1 && x > 0)&&squares[y][x+direction[0]].ID_NUMBER!=2 || direction[0] == 0)
                         x += direction[0];
-                    else {
-//                        if (direction[0] == 1) error = "Справа клеток нет!";
-//                        else error = "Слева клеток нет!";
-                    }
                     if ((direction[1] == 1 && y < squares.length-1
                             || direction[1] == -1 && y > 0)&&squares[y+direction[1]][x].ID_NUMBER!=2 || direction[1] == 0)
                         y += direction[1];
-                    else {
-//                        if (direction[1] == 1) error = "Внизу клеток нет!";
-//                        else error = "Сверху клеток нет!";
-                    }
                     int xy[] = {x, y};
                     moveXY.add(xy);
                     break;
@@ -46,7 +38,7 @@ public class CommandParser {
                         turn = 0;
                     else turn += 1;
                     direction = turns[turn];
-                    int[] rxy = {90};
+                    int[] rxy = {90};//направо
                     moveXY.add(rxy);
                     break;
                 case (2):
@@ -54,12 +46,10 @@ public class CommandParser {
                         turn = turns.length - 1;
                     else turn -= 1;
                     direction = turns[turn];
-                    int[] lxy = {-90};
+                    int[] lxy = {-90};//налево
                     moveXY.add(lxy);
                     break;
             }
-//            if(error!=null)
-//                break;
         }
         return moveXY;
     }

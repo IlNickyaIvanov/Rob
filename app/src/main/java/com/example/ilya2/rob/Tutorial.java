@@ -30,8 +30,8 @@ public class Tutorial {
             Utils.AlertDialog(activity,"Туториал",lessons[lesCount],"Вперёд");
             if(lesCount==2){
                 GameActivity.stuff = new Stuff[1];
-                GameActivity.stuff[0] = new Stuff(activity,1, GameActivity.squares);
-                GameActivity.stuff[0].setXY(0,1);
+                GameActivity.stuff[0] = new Stuff(activity,1);
+                GameActivity.stuff[0].setXY();
             }
             if(lesCount==3) GameActivity.move = false;
             lesCount++;
@@ -39,7 +39,7 @@ public class Tutorial {
             Utils.AlertDialog(activity,"Туториал","Охотник тебя поймал...попробуй по-другому :с","Еще раз...");
             GameActivity.robots[0].delete();
             GameActivity.robots[0] = new Robot(activity,0,0,2, GameActivity.squares);
-            GameActivity.hunter.setXY(2,2);
+            GameActivity.hunter.setXY();
         }else if(lesCount==lessons.length && !Utils.isADVisible() && isGameOver()){
                 isTutorial=false;
                 SharedPreferences.Editor editor = GameActivity.mSettings.edit();

@@ -11,12 +11,10 @@ import java.util.ArrayList;
 public class Stuff {
     private ImageView stuff;
     private float x,y;
-    int sqX,sqY;
+    int sqX=-1,sqY=-1;
     int type,size;
     boolean opened = false;
-    static private Square squares[][];
-    Stuff (Activity main, int type,Square squares[][]){
-        this.squares = squares;
+    Stuff (Activity main, int type){
         this.size = Square.size;
         this.type = type;
         int []sqXY=randomSqXY();
@@ -49,9 +47,6 @@ public class Stuff {
                 stuff.setImageResource(R.drawable.sun);
                 break;
         }
-        AlphaAnimation anim = new AlphaAnimation(0f,1f);
-        anim.setDuration(800);
-        stuff.startAnimation(anim);
         opened = true;
     }
     void delete(){
@@ -59,7 +54,7 @@ public class Stuff {
         try{
             FrameLayout parent = (FrameLayout) stuff.getParent();
             parent.removeView(stuff);
-        }catch (Throwable t){}
+        }catch (Throwable ignored){}
     }
     static int [] randomSqXY(){
         while(true){
@@ -76,9 +71,9 @@ public class Stuff {
             if(check)return sqXY;
         }
     }
-    void setXY(int x, int y){
-        sqX = x;
-        sqY = y;
+    void setXY(){
+        sqX = 0;
+        sqY = 1;
         this.x = GameActivity.squares[sqY][sqX].x;
         this.y = GameActivity.squares[sqY][sqX].y;
         stuff.setX(this.x);

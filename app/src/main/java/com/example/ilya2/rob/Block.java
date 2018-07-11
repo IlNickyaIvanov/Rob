@@ -1,6 +1,9 @@
 package com.example.ilya2.rob;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.drm.DrmStore;
+import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -11,10 +14,11 @@ public class Block {
     ImageView image;
     int size=Command.size*4/5, alpha; // размер картинки, врещение, прозрачность
     boolean connected=false;
-    int num;
+    private int num;
      float x,y;
     int type;
     boolean newCom=true;
+    private final MediaPlayer bubble,stone;
     @SuppressLint("ClickableViewAccessibility")
     Block(GameActivity main, float x, float y, int type, final int number) {
         this.num = number;
@@ -45,6 +49,8 @@ public class Block {
             return false;
         }
         });
+        bubble = MediaPlayer.create(main, R.raw.bubblepop);
+        stone = MediaPlayer.create(main, R.raw.stonedry);
     }
     //установка координат с проверкой на присоединение
     Block setXY(){
@@ -54,6 +60,7 @@ public class Block {
                 continue;
             if(getRoundX()==block.getRoundX() &&  getRoundY()==block.getRoundY(size)) {
                 connected = true;
+                stone.start();
                 GameActivity.touchedBlock=-1;
                 return block;
             }
@@ -64,12 +71,15 @@ public class Block {
     boolean checkTopConnection(float x,float y){
         this.x=x-size/2;
         this.y=y-size/2;
-        connected = GameActivity.blocks.size() == 1;
-        if(getRoundY(size)== GameActivity.blocks.get(0).getRoundY() && getRoundX()== GameActivity.blocks.get(0).getRoundX()){
+        connected = GameActivity.blocks.size() ==1;
+        boolean isTop=false;
+        if(GameActivity.blocks.get(0).y == y)isTop=true;
+        if(getRoundY(size)== GameActivity.blocks.get(isTop?1:0).getRoundY() && getRoundX()== GameActivity.blocks.get(isTop?1:0).getRoundX()){
             this.x = GameActivity.blocks.get(0).x;
             this.y = GameActivity.blocks.get(0).y- GameActivity.blocks.get(0).size;
             setBlockXY(this.x,this.y);
             connected = true;
+            stone.start();
             GameActivity.touchedBlock=-1;
             return true;
         }
@@ -82,30 +92,25 @@ public class Block {
         this.y = lastBlock.y+lastBlock.size;
         setBlockXY(this.x,this.y);
     }
-    int getRoundX(){
+    private int getRoundX(){
         return Math.round(x-x%100);
     }
-    int getRoundY(){
+    private int getRoundY(){
         return Math.round(y-y%100);
     }
-    int getRoundY(int size){
+    private int getRoundY(int size){
         return Math.round((y+size)-(y+size)%100);
     }
     void delete(){
         FrameLayout parent = (FrameLayout) image.getParent();
         parent.removeView(image);
-    }
-    void hide(){
-        image.setAlpha(0f);
-    }
-    void show(){
-        image.setAlpha(1f);
+        bubble.start();
     }
     void setOld(){
         image.setAlpha(0.6f);
     }
     //чистая установка координат
-    void setBlockXY(float x, float y){
+    private void setBlockXY(float x, float y){
         image.setX(x);
         image.setY(y);
     }

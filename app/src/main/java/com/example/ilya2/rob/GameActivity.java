@@ -21,17 +21,11 @@ public class GameActivity extends AppCompatActivity {
     static int comLim=1;
     static int newCom=0;
 
-    static int map[][] = {
-            {0,0,0,0,0},
-            {0,0,0,0,0},
-            {0,0,0,0,0},
-            {0,0,0,0,0},
-            {0,0,0,0,0}};
+    static int map[][];
     static Square [][] squares;
     static Robot robots[];
     static Hunter hunter;
     static String AlertDialogMessage;
-    boolean pause=false;
     static boolean move=false;
     static Command commands[];
     static ArrayList<Block> blocks;
@@ -54,7 +48,6 @@ public class GameActivity extends AppCompatActivity {
         timer.start();
         textLim = findViewById(R.id.stepLim);
         startGame(this);
-
         mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         if(!mSettings.contains(APP_PREFERENCES_TUTOR)) {
             SharedPreferences.Editor editor = mSettings.edit();
@@ -62,7 +55,7 @@ public class GameActivity extends AppCompatActivity {
             editor.apply();
         }
         if(!mSettings.getBoolean(APP_PREFERENCES_TUTOR,false )){
-            Tutorial tutor = new Tutorial(this);
+            new Tutorial(this);
         }
         else Utils.TwoButtonAllertDialog(this,"Туториал",
                 "Вы уже прошли обучение. Хотите повторить?","Нет","Ага");
@@ -96,6 +89,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     static void startGame(Activity activity){
+        activeRobot=0;
         gameOver=false;
         createMap(activity);
         if(robots!=null) {
@@ -104,7 +98,8 @@ public class GameActivity extends AppCompatActivity {
         }
         robots = new Robot[SettingsActivity.robotsNum];//кол-во роботов из настроек
         robots[0] = new Robot(activity,0,0,2,squares);
-        if(robots.length>1)robots[1] = new Robot(activity,squares[0].length-1,0,3,squares);
+        if(robots.length==2)robots[1] = new Robot(activity,squares[0].length-1,squares.length-1,0,squares);
+        else robots[1] = new Robot(activity,squares[0].length-1,0,3,squares);
         if(robots.length>2)robots[2] = new Robot(activity,squares[0].length-1,squares.length-1,0,squares);
         if(robots.length>3)robots[3] = new Robot(activity,0,squares[0].length-1,1,squares);
         if(hunter!=null)
@@ -126,11 +121,11 @@ public class GameActivity extends AppCompatActivity {
         //рандомные вопросы из настроек
         stuff = new Stuff[SettingsActivity.stuffNum];
         for (int i=0;i<stuff.length;i++){
-            stuff[i]=new Stuff(activity,(int) Math.round(Math.random()),squares);
+            stuff[i]=new Stuff(activity,(int) Math.round(Math.random()));
         }
         if(blocks !=null){
             for (Block block: blocks)
-            block.delete();
+                block.delete();
             blocks.removeAll(blocks);
         }
         comLim=1;
@@ -175,22 +170,22 @@ public class GameActivity extends AppCompatActivity {
 
     public void update() {
         if (move) {//включается при нажатии ПУСК
-            boolean ended=true;
+            boolean ended= true;//true когда робот закончил движение
             boolean gameOver=true;
-            for (Robot robot: robots){
-                if(ended)ended=robot.move();
-                else robot.move();
-                gameOver=gameOver&&robot.broken;
+            boolean isStillAnimate=false;//проверка на окнчание анимации у всех роботов
+            for (int i=0;i<robots.length;i++){
+                if(ended)ended=robots[i].move();
+                else robots[i].move();
+                isStillAnimate=isStillAnimate||robots[i].anim;
+                gameOver=gameOver&&robots[i].broken;//gameOver если все роботы сломаны
             }
-            if(ended && hunter.moveXY.size()==0 && !gameOver){
+            if(ended && hunter.moveXY.size()==0 && !gameOver && hunter.steps>0){
                 hunter.hunt();//метод, генерирующий путь до ближайшего робота
             }
-            if(ended )move=!hunter.botMove();//метод возвращает steps==0
+            if(ended)move=!hunter.botMove();//метод возвращает steps==0
+            move=isStillAnimate;
             if(!move)robots[activeRobot].startAnim();
             textLim.setText("comLim "+String.valueOf(comLim-newCom));
-//            if(ended)
-////                for (Stuff stuff: stuff)
-////                    if(stuff.opened)stuff.delete();
         }
     }
 
@@ -198,21 +193,21 @@ public class GameActivity extends AppCompatActivity {
     public boolean onTouchEvent(MotionEvent event) {
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
-                if(newCom<comLim)for (Command command : commands) {
-                    refreshBlocks();
-                    if (command.touched) {
+                if(newCom<comLim)
+                    for (int i = 0; i<commands.length;i++) {
+                    if (commands[i].touched) {
                         newCom++;
-                        blocks.add(new Block(this, command.x, command.y,command.type,blocks.size()));
+                        blocks.add(new Block(this, commands[i].x, commands[i].y,commands[i].type,blocks.size()));
                         touchedBlock=blocks.size()-1;
-                        command.touched=false;
+                        commands[i].touched=false;
                         break;
+                        }
                     }
-                }
+
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(GameActivity.touchedBlock!=-1) {
-                    Block to = null,that;//to - к чему присоединяет, that - что присоединяет
-                    that=blocks.get(touchedBlock);
+                    Block to = null,that=blocks.get(touchedBlock);;//to - к чему присоединяет, that - что присоединяет
                     if(that.checkTopConnection(event.getX(),event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
                         blocks.remove(that);
                         blocks.add(0,that);
@@ -267,7 +262,7 @@ public class GameActivity extends AppCompatActivity {
         }
         @Override
         public void onTick(long millisIntilFinished) {
-            if (!pause) update();
+            update();
         }
         @Override
         public void onFinish() {

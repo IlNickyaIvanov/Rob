@@ -10,8 +10,7 @@ import android.widget.RelativeLayout;
     float x,y;
     static int size=50;
     static int startX,startY;
-    int ID_NUMBER=0;
-    boolean isVISIBLE=true;
+    int ID_NUMBER;
         Square(Activity main, float x, float y,int id) {
         ID_NUMBER=id;
         image = new ImageView(main);
