@@ -1,7 +1,6 @@
 package com.example.ilya2.rob;
 
 import android.app.Activity;
-import android.os.CountDownTimer;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -11,11 +10,13 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class Hunter {
+
+    private final int SPEED = (int)(GameActivity.FPS_FOR_ANIMATION*0.6);
+
     private float x, y;
     int sqX, sqY;
     private float speedX,targetX,speedY,targetY;
     boolean anim=false;
-    private int onTickMove=600/60;
     ImageView image;
     static int size=50;
     private int map[][];//карта 0-пустая 1-цели 2-стены
@@ -38,8 +39,8 @@ public class Hunter {
         this.y = y;
         this.sqX=sqX;
         this.sqY=sqY;
-        MyTimer timer = new MyTimer();
-        timer.start();
+//        MyTimer timer = new MyTimer();
+//        timer.start();
     }
     //вызывать после окончания передвежения робота
     void hunt(){
@@ -119,19 +120,20 @@ public class Hunter {
         float y= GameActivity.squares[xy[1]][xy[0]].y;
         targetX=(x);
         targetY=(y);
-        speedX=(x-this.x)/40;
-        speedY=(y-this.y)/40;
+        speedX=(x-this.x)/ 40;
+        speedY=(y-this.y)/ 40;
         this.sqX = xy[0];
         this.sqY = xy[1];
         steps--;
         if(steps==0)moveXY.clear();
         return steps==0;
     }
-    private void update(){
-        if(anim && !GameActivity.gameOver){
+    void update(){
+        if(anim){
             if(Math.round(x)!=Math.round(targetX))x+=speedX;
             if(Math.round(y)!=Math.round(targetY))y+=speedY;
-            if(Math.round(x)==Math.round(targetX) && Math.round(y)==Math.round(targetY)) anim=false;
+            if(Math.round(x)==Math.round(targetX) && Math.round(y)==Math.round(targetY))
+                anim=false;
             if(image!=null) {
                 image.setX(x);
                 image.setY(y);
@@ -176,16 +178,16 @@ public class Hunter {
         else if(i!=-1) GameActivity.activeRobot = i;
     }
 
-    class MyTimer extends CountDownTimer {
-        MyTimer() {
-            super(Integer.MAX_VALUE, onTickMove);
-        }
-        @Override
-        public void onTick(long millisUntilFinished) {
-            update();
-        }
-        @Override
-        public void onFinish() {
-        }
-    }
+//    class MyTimer extends CountDownTimer {
+//        MyTimer() {
+//            super(Integer.MAX_VALUE, onTickMove);
+//        }
+//        @Override
+//        public void onTick(long millisUntilFinished) {
+//            update();
+//        }
+//        @Override
+//        public void onFinish() {
+//        }
+//    }
 }

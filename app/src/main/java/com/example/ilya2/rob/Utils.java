@@ -14,7 +14,7 @@ class Utils {
     }
     public static void AlertDialog(final Activity main, String title, String Message, final String TextButton ){
         GameActivity.AlertDialogMessage=null;
-        if(TextButton.equals("Еще раз")) GameActivity.gameOver = true;
+        //if(TextButton.equals("Еще раз")) GameActivity.gameOver = true;
         AlertDialog.Builder builder = new AlertDialog.Builder(main);
         builder.setTitle(title)
                 .setMessage(Message)

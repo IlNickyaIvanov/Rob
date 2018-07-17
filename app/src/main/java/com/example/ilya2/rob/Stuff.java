@@ -62,7 +62,7 @@ public class Stuff {
                     (int)Math.round(Math.random()*(GameActivity.map[0].length-1))};
             boolean check=true;
             for (Robot robot: GameActivity.robots)
-                if (robot.sqX==sqXY[0] && robot.sqY==sqXY[1])
+                if (robot!=null && robot.sqX==sqXY[0] && robot.sqY==sqXY[1])
                     check=false;
             if(GameActivity.hunter.sqX==sqXY[0]&& GameActivity.hunter.sqY==sqXY[1])
                 check=false;

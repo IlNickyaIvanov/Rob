@@ -2,6 +2,8 @@ package com.example.ilya2.rob;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -14,35 +16,46 @@ public class SettingsActivity extends AppCompatActivity {
     static int robotsNum=2;//
     static ArrayList<ArrayList<Square>> map;
     static ArrayList<Stuff> stuff;
+    static ArrayList<Robot> robots;
+    SeekBar seekBar,seekBar2,seekBar3,seekBar4;
+    TextView textSize,textWall,textStuff,textRobots;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        final TextView textSize = findViewById(R.id.textView);
-        final TextView textWall = findViewById(R.id.textView2);
-        final TextView textStuff = findViewById(R.id.textView3);
-        final TextView textRobots = findViewById(R.id.textView4);
-        SeekBar seekBar = findViewById(R.id.seekBar);//трекер по размеру карты
+
+        textSize = findViewById(R.id.textView);
+        textSize.setText("Размер карты: "+mapSize+"x"+mapSize);
+        textWall = findViewById(R.id.textView2);
+        textWall.setText("Кол-во стен: "+wallNum);
+        textStuff = findViewById(R.id.textView3);
+        textStuff.setText("Кол-во вопросов: "+stuffNum);
+        textRobots = findViewById(R.id.textView4);
+        textRobots.setText("Кол-во роботов: "+robotsNum);
+
+        seekBar = findViewById(R.id.seekBar);
+        seekBar.setProgress(mapSize*100/10);
+        seekBar2 = findViewById(R.id.seekBar2);
+        seekBar2.setProgress(wallNum*100/(int)(mapSize*mapSize*0.16));
+        seekBar3 = findViewById(R.id.seekBar3);
+        seekBar3.setProgress(stuffNum*100/(mapSize-1));
+        seekBar4 = findViewById(R.id.seekBar4);
+        seekBar4.setProgress(robotsNum*100/4);
+
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float num = progress/10;
-                mapSize = (num>0.5)?Math.round(num):1;
-                float num2 = seekBar.getProgress()*Math.round(mapSize*mapSize*0.16)/100;
-                wallNum = (num2>0.5)?Math.round(num2):0;
-                float num3 = seekBar.getProgress()*(mapSize-1)/100;
-                stuffNum = (num3>0.5)?Math.round(num3):0;
+                setMapSize(seekBar.getProgress());
+                setWallNum(seekBar2.getProgress());
+                setStuffNum(seekBar3.getProgress());
                 createMap();
-                textSize.setText("Размер карты: "+mapSize+"x"+mapSize);
-                textWall.setText("Кол-во стен: "+wallNum);
-                textStuff.setText("Кол-во вопросов: "+stuffNum);
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-        SeekBar seekBar2 = findViewById(R.id.seekBar2);//трекер по стенам на карте
+
         seekBar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
@@ -50,13 +63,11 @@ public class SettingsActivity extends AppCompatActivity {
             public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                float num = seekBar.getProgress()*Math.round(mapSize*mapSize*0.16)/100;
-                wallNum = (num>0.5)?Math.round(num):0;
+                setWallNum(seekBar.getProgress());
                 createMap();
-                textWall.setText("Кол-во стен: "+wallNum);
             }
         });
-        SeekBar seekBar3 = findViewById(R.id.seekBar3);//трекер по вопросам на карте
+
         seekBar3.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
@@ -64,13 +75,11 @@ public class SettingsActivity extends AppCompatActivity {
             public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                float num = seekBar.getProgress()*(mapSize-1)/100;
-                stuffNum = (num>0.5)?Math.round(num):0;
+                setStuffNum(seekBar.getProgress());
                 createMap();
-                textStuff.setText("Кол-во вопросов: "+stuffNum);
             }
         });
-        SeekBar seekBar4 = findViewById(R.id.seekBar4);//трекер по роботам на карте
+
         seekBar4.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
@@ -78,13 +87,48 @@ public class SettingsActivity extends AppCompatActivity {
             public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                float num = seekBar.getProgress()*4/100;
-                robotsNum = (num>0.5)?Math.round(num):1;
-                textRobots.setText("Кол-во роботов: "+robotsNum);
+                setRobotsNum(seekBar.getProgress());
             }
         });
         createMap();
 
+    }
+    //трекер по размеру карты
+    void setMapSize(int progress){
+        float num = progress*10/100;
+        mapSize = (num>3)?Math.round(num):3;
+        textSize.setText("Размер карты: "+mapSize+"x"+mapSize);
+        seekBar.setProgress(mapSize*100/10);
+    }
+    //трекер по стенам на карте
+    void setWallNum(int progress){
+        float num = progress*Math.round(mapSize*mapSize*0.16)/100;
+        wallNum = (num>0.5)?Math.round(num):1;
+        textWall.setText("Кол-во стен: "+wallNum);
+        seekBar2.setProgress(wallNum*100/(int)(mapSize*mapSize*0.16));
+    }
+    //трекер по вопросам на карте
+    void setStuffNum(int progress){
+        float num = progress*(mapSize-1)/100;
+        stuffNum = (num>0.5)?Math.round(num):1;
+        textStuff.setText("Кол-во вопросов: "+stuffNum);
+        seekBar3.setProgress(stuffNum*100/(mapSize-1));
+
+    }
+    //трекер по роботам
+    void setRobotsNum(int progress){
+        float num = progress*(5)/100;
+        robotsNum = (num>0.5)?Math.round(num):1;
+        textRobots.setText("Кол-во роботов: "+robotsNum);
+        seekBar4.setProgress(robotsNum*100/4);
+        createMap();
+    }
+    void createRandomMap(){
+        setMapSize((int)(Math.random()*100));
+        setWallNum((int)(Math.random()*100));
+        setStuffNum((int)(Math.random()*100));
+        setRobotsNum((int)(Math.random()*100));
+        createMap();
     }
     void createMap(){
         if(map!=null)
@@ -94,8 +138,12 @@ public class SettingsActivity extends AppCompatActivity {
         if(stuff!=null)
             for (Stuff stf:stuff)
                 stf.delete();
+        if(robots!=null)
+            for(Robot robot:robots)
+                robot.delete();
         map = new ArrayList<>();
         stuff = new ArrayList<>();
+        robots = new ArrayList<>();
         int screenWidth = this.getApplicationContext().getResources().getDisplayMetrics().widthPixels;
         int screenHeight = this.getApplicationContext().getResources().getDisplayMetrics().heightPixels-50;
         Square.size = screenHeight/2/mapSize;
@@ -107,12 +155,21 @@ public class SettingsActivity extends AppCompatActivity {
             }
             map.add(line);
         }
-
+        //роботы
+        robots.add(new Robot(this,0,0,2,map));
+        if(robotsNum>1)
+            robots.add(new Robot(this,mapSize-1,mapSize-1,0,map));
+        if(robotsNum>2)
+            robots.add(new Robot(this,mapSize-1,0,3,map));
+        if(robotsNum>3)
+            robots.add(new Robot(this,0,mapSize-1,1,map));
+        //стены
         for (int i=0;i<wallNum;i++){
             int[]xy=randomSqXY();
             map.get(xy[1]).get(xy[0]).ID_NUMBER=2;
             map.get(xy[1]).get(xy[0]).image.setAlpha(0f);
         }
+        //вопросы
         for (int i=0;i<stuffNum;i++){
             stuff.add(new Stuff(this,map));
         }
@@ -123,9 +180,21 @@ public class SettingsActivity extends AppCompatActivity {
             int []sqXY={(int)Math.round(Math.random()*(map.get(0).size()-1)),
                     (int)Math.round(Math.random()*(map.get(0).size()-1))};
             boolean check=true;
-                if( map.get(sqXY[1]).get(sqXY[0]).ID_NUMBER==2)
-                    check=false;
+            if( map.get(sqXY[1]).get(sqXY[0]).ID_NUMBER==2)
+                check=false;
+            if(sqXY[0]==0 && sqXY[1]==0)
+                check=false;
+            if(robotsNum>1 && sqXY[0]==mapSize-1 && sqXY[1]==mapSize-1)
+                check=false;
+            if(robotsNum>2 && sqXY[0]==mapSize-1 && sqXY[1]==0)
+                check=false;
+            if(robotsNum>3 && sqXY[0]==0 && sqXY[1]==mapSize-1)
+                check=false;
             if(check)return sqXY;
         }
+    }
+
+    public void onClickRandomMap(View view) {
+        createRandomMap();
     }
 }

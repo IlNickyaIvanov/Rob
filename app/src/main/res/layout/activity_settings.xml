@@ -57,5 +57,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:progress="50"/>
+        <Button
+            android:id="@+id/randomBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="100dp"
+            android:layout_marginRight="100dp"
+            android:onClick="onClickRandomMap"
+            android:text="Рандомная Карта" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

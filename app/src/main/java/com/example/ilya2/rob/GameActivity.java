@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -15,6 +17,11 @@ import java.util.ArrayList;
 
 public class GameActivity extends AppCompatActivity {
 
+    private Handler handler = new Handler();
+    private long time = 0L;
+
+    int count=0;//это счетчик для таймера
+    final static int FPS_FOR_ANIMATION=60;
     static boolean gameOver=false;
 
     static int activeRobot=0;
@@ -44,8 +51,13 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//штука, чтобы экран не выключался :D не знаю зачем
-        MyTimer timer = new MyTimer();
-        timer.start();
+//        MyTimer timer = new MyTimer();
+//        timer.start();
+        if (time == 0L) {
+            time = SystemClock.uptimeMillis(); // вычисляем время
+            handler.removeCallbacks(myRun);
+            handler.postDelayed(myRun, 100); // через столько милисикунд стартует
+        }
         textLim = findViewById(R.id.stepLim);
         startGame(this);
         mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
@@ -138,6 +150,7 @@ public class GameActivity extends AppCompatActivity {
             robots[activeRobot].stopAnim();
             hunter.steps=comLim;
             move=true;
+            count=-1;
         }
         newCom=0;
         do {
@@ -154,6 +167,7 @@ public class GameActivity extends AppCompatActivity {
             robots[activeRobot].execute(blocks);
             hunter.steps=comLim;
             move = true;
+            count=-1;
         }
 
         for (Block block:blocks) {
@@ -168,8 +182,9 @@ public class GameActivity extends AppCompatActivity {
         while (robots[activeRobot].broken);
     }
 
+    //единый таймер для всей игры
     public void update() {
-        if (move) {//включается при нажатии ПУСК
+        if (count>60 || count==-1) {//включается при нажатии ПУСК
             boolean ended= true;//true когда робот закончил движение
             boolean gameOver=true;
             boolean isStillAnimate=false;//проверка на окнчание анимации у всех роботов
@@ -179,49 +194,57 @@ public class GameActivity extends AppCompatActivity {
                 isStillAnimate=isStillAnimate||robots[i].anim;
                 gameOver=gameOver&&robots[i].broken;//gameOver если все роботы сломаны
             }
-            if(ended && hunter.moveXY.size()==0 && !gameOver && hunter.steps>0){
-                hunter.hunt();//метод, генерирующий путь до ближайшего робота
-            }
-            if(ended)move=!hunter.botMove();//метод возвращает steps==0
-            move=isStillAnimate;
-            if(!move)robots[activeRobot].startAnim();
-            textLim.setText("comLim "+String.valueOf(comLim-newCom));
-        }
+            if(!isStillAnimate) {
+                if (ended && hunter.moveXY.size() == 0 && !gameOver && hunter.steps > 0) {
+                    hunter.hunt();//метод, генерирующий путь до ближайшего робота
+                }
+                if (ended)
+                    move = !hunter.botMove();//метод возвращает steps==0
+                move = hunter.anim;
+                if (!move) {
+                    count = 1;
+                    robots[activeRobot].startAnim();
+                }
+                textLim.setText("comLim " + String.valueOf(comLim - newCom));
+                count=0;
+            }}
+        hunter.update();
+        for (int i=0;i<robots.length;++i)
+            robots[i].update();
+        ++count;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
-                if(newCom<comLim)
-                    for (int i = 0; i<commands.length;i++) {
+                if(newCom>=comLim)break;
+                for (int i = 0; i<commands.length;++i)
                     if (commands[i].touched) {
                         newCom++;
                         blocks.add(new Block(this, commands[i].x, commands[i].y,commands[i].type,blocks.size()));
                         touchedBlock=blocks.size()-1;
                         commands[i].touched=false;
                         break;
-                        }
-                    }
-
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if(GameActivity.touchedBlock!=-1) {
-                    Block to = null,that=blocks.get(touchedBlock);;//to - к чему присоединяет, that - что присоединяет
-                    if(that.checkTopConnection(event.getX(),event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
-                        blocks.remove(that);
-                        blocks.add(0,that);
-                        refreshBlocks();
-                    }else{
-                        to=that.setXY();
-                    }
-                    //добавление обьекта в список в нужное место
-                    if(to!=null){
-                        blocks.remove(that);
-                        blocks.add(blocks.indexOf(to)+1,that);
-                        refreshBlocks();
-                    }
+                if(GameActivity.touchedBlock==-1) break;
+                Block to = null,that=blocks.get(touchedBlock);//to - к чему присоединяет, that - что присоединяет
+                if(that.checkTopConnection(event.getX(),event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
+                    blocks.remove(that);
+                    blocks.add(0,that);
+                    refreshBlocks();
+                }else{
+                    to=that.setXY();
                 }
+                //добавление обьекта в список в нужное место
+                if(to!=null){
+                    blocks.remove(that);
+                    blocks.add(blocks.indexOf(to)+1,that);
+                    refreshBlocks();
+                }
+
                 break;
             case MotionEvent.ACTION_UP:
                 if(blocks.size()==1){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
@@ -256,16 +279,33 @@ public class GameActivity extends AppCompatActivity {
     }
 
 
-    class MyTimer extends CountDownTimer {
-        MyTimer() {
-            super(Integer.MAX_VALUE, 1000);
-        }
-        @Override
-        public void onTick(long millisIntilFinished) {
-            update();
-        }
-        @Override
-        public void onFinish() {
-        }
+//    class MyTimer extends CountDownTimer {
+//        MyTimer() {
+//            super(Integer.MAX_VALUE, 1000/60);
+//        }
+//        @Override
+//        public void onTick(long millisIntilFinished) {
+//            if(move)update();
+//        }
+//        @Override
+//        public void onFinish() {
+//        }
+//    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
+        move = false;
+
     }
+
+    private Runnable myRun = new Runnable() {
+        @Override
+        public void run() {
+            handler.postDelayed(this, 1000/FPS_FOR_ANIMATION); // повторяем через каждые 10 милисекунд
+            if(move)update(); // вызываем обновлялку игры
+        }
+    };
+
 }
