@@ -10,6 +10,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import java.util.logging.Logger;
+
 public class Block {
     ImageView image;
     int size=Command.size*4/5, alpha; // размер картинки, врещение, прозрачность
@@ -19,6 +21,8 @@ public class Block {
     int type;
     boolean newCom=true;
     private final MediaPlayer bubble,stone;
+    Logger log = Logger.getLogger(Block.class.getName());
+    int logy=0;
     @SuppressLint("ClickableViewAccessibility")
     Block(GameActivity main, float x, float y, int type, final int number) {
         this.num = number;
@@ -45,6 +49,8 @@ public class Block {
         {@Override
         public boolean onTouch(View v, MotionEvent event)
         {
+            logy=0;
+            log.info("log: Block touched\n");
             GameActivity.touchedBlock=num;
             return false;
         }
@@ -111,6 +117,8 @@ public class Block {
     }
     //чистая установка координат
     private void setBlockXY(float x, float y){
+        if(logy==0)log.info("log: XY\n");
+        logy=1;
         image.setX(x);
         image.setY(y);
     }

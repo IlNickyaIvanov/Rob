@@ -117,7 +117,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
     //трекер по роботам
     void setRobotsNum(int progress){
-        float num = progress*(5)/100;
+        float num = progress*(4)/100;
         robotsNum = (num>0.5)?Math.round(num):1;
         textRobots.setText("Кол-во роботов: "+robotsNum);
         seekBar4.setProgress(robotsNum*100/4);
@@ -148,10 +148,11 @@ public class SettingsActivity extends AppCompatActivity {
         int screenHeight = this.getApplicationContext().getResources().getDisplayMetrics().heightPixels-50;
         Square.size = screenHeight/2/mapSize;
         Square.startX = (screenWidth-(mapSize*Square.size))/2;
+        Square.startY = screenHeight*3/7+(screenHeight/2-(mapSize*Square.size))/2;
         for (int i=0;i<mapSize;i++){
             ArrayList<Square> line = new ArrayList<>();
             for(int j=0;j<mapSize;j++){
-                line.add(new Square(this,j*(Square.size)+Square.startX,i*(Square.size)+screenHeight/2,0));
+                line.add(new Square(this,j*(Square.size)+Square.startX,i*(Square.size)+Square.startY,0));
             }
             map.add(line);
         }

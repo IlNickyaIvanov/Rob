@@ -4,7 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".StartActivity">
+    tools:context=".StartActivity"
+    android:background="#292929">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/background" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,25 +20,27 @@
 
         <Button
             android:id="@+id/button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:layout_marginLeft="100dp"
-            android:layout_marginRight="100dp"
+            android:layout_width="215dp"
+            android:layout_height="55dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="5dp"
             android:layout_marginTop="200dp"
+            android:background="@drawable/strt_btn"
             android:onClick="onClickStart"
-            android:text="start" />
+            android:text="start"
+            android:textSize="24sp" />
 
         <Button
             android:id="@+id/button2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="215dp"
+            android:layout_height="55dp"
+            android:layout_gravity="center"
             android:layout_marginBottom="100dp"
-            android:layout_marginLeft="100dp"
-            android:layout_marginRight="100dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/set_btn"
             android:onClick="onClickSettings"
             android:text="settings"
+            android:textSize="23sp"
             tools:ignore="OnClick" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

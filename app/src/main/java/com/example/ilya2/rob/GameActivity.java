@@ -14,6 +14,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -46,6 +47,8 @@ public class GameActivity extends AppCompatActivity {
     public static final String APP_PREFERENCES_TUTOR = "tutor";
     static SharedPreferences mSettings;
 
+    Logger log = Logger.getLogger(GameActivity.class.getName());
+    static int logy=0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -140,7 +143,7 @@ public class GameActivity extends AppCompatActivity {
                 block.delete();
             blocks.removeAll(blocks);
         }
-        comLim=1;
+        comLim=10;
         newCom=0;
         textLim.setText("comLim "+String.valueOf(comLim-newCom));
     }
@@ -218,6 +221,8 @@ public class GameActivity extends AppCompatActivity {
     public boolean onTouchEvent(MotionEvent event) {
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
+                logy=0;
+                log.info("log: Touch event\n");
                 if(newCom>=comLim)break;
                 for (int i = 0; i<commands.length;++i)
                     if (commands[i].touched) {
@@ -230,12 +235,14 @@ public class GameActivity extends AppCompatActivity {
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(GameActivity.touchedBlock==-1) break;
+                if(logy==0)log.info("log: Move event\n");
+                logy=1;
                 Block to = null,that=blocks.get(touchedBlock);//to - к чему присоединяет, that - что присоединяет
                 if(that.checkTopConnection(event.getX(),event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
                     blocks.remove(that);
                     blocks.add(0,that);
                     refreshBlocks();
-                }else{
+                }else{//установка координат косания и проверка на присоединение снизу
                     to=that.setXY();
                 }
                 //добавление обьекта в список в нужное место
@@ -244,9 +251,10 @@ public class GameActivity extends AppCompatActivity {
                     blocks.add(blocks.indexOf(to)+1,that);
                     refreshBlocks();
                 }
-
                 break;
             case MotionEvent.ACTION_UP:
+                logy=2;
+                log.info("log: Up event\n");
                 if(blocks.size()==1){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
                     for (Command com: commands)
                         if(com.isUnderBlock(blocks.get(0))) {
@@ -257,6 +265,7 @@ public class GameActivity extends AppCompatActivity {
                             break;
                         }
                 }
+                //удаление не присоединенного блока
                 if (touchedBlock!=-1 && blocks.size()>0 &&!blocks.get(touchedBlock).connected) {
                     if(blocks.get(touchedBlock).newCom)newCom--;
                     blocks.get(touchedBlock).delete();
@@ -265,7 +274,7 @@ public class GameActivity extends AppCompatActivity {
                 touchedBlock=-1;
                 refreshBlocks();
                 textLim.setText("comLim "+String.valueOf(comLim-newCom));
-                //в коде используется кол во новых блоков и лимит на их установку!
+                //в коде используется кол-во новых блоков и лимит на их установку!
         }
         return true;
     }
