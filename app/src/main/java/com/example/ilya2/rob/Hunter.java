@@ -11,8 +11,6 @@ import java.util.Queue;
 
 public class Hunter {
 
-    private final int SPEED = (int)(GameActivity.FPS_FOR_ANIMATION*0.6);
-
     private float x, y;
     int sqX, sqY;
     private float speedX,targetX,speedY,targetY;
@@ -39,8 +37,6 @@ public class Hunter {
         this.y = y;
         this.sqX=sqX;
         this.sqY=sqY;
-//        MyTimer timer = new MyTimer();
-//        timer.start();
     }
     //вызывать после окончания передвежения робота
     void hunt(){
@@ -112,8 +108,7 @@ public class Hunter {
         int xy[]=moveXY.poll();
         for (Robot robot: GameActivity.robots)
             if(xy[0]==robot.sqX&&xy[1]==robot.sqY) {
-                robot.broken = true;
-                robot.setAlpha(0.5f);
+                robot.setBroken(true);
                 findNewActiveRobot();
             }
         float x= GameActivity.squares[xy[1]][xy[0]].x;
@@ -178,16 +173,4 @@ public class Hunter {
         else if(i!=-1) GameActivity.activeRobot = i;
     }
 
-//    class MyTimer extends CountDownTimer {
-//        MyTimer() {
-//            super(Integer.MAX_VALUE, onTickMove);
-//        }
-//        @Override
-//        public void onTick(long millisUntilFinished) {
-//            update();
-//        }
-//        @Override
-//        public void onFinish() {
-//        }
-//    }
 }

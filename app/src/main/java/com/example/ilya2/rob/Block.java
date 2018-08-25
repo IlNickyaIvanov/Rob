@@ -10,6 +10,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import java.util.Date;
 import java.util.logging.Logger;
 
 public class Block {
@@ -23,6 +24,7 @@ public class Block {
     private final MediaPlayer bubble,stone;
     Logger log = Logger.getLogger(Block.class.getName());
     int logy=0;
+    Date discon;
     @SuppressLint("ClickableViewAccessibility")
     Block(GameActivity main, float x, float y, int type, final int number) {
         this.num = number;
@@ -50,7 +52,7 @@ public class Block {
         public boolean onTouch(View v, MotionEvent event)
         {
             logy=0;
-            log.info("log: Block touched\n");
+            //log.info("log: Block touched\n");
             GameActivity.touchedBlock=num;
             return false;
         }
@@ -60,12 +62,18 @@ public class Block {
     }
     //установка координат с проверкой на присоединение
     Block setXY(){
-        setBlockXY(this.x,this.y);
+        //setBlockXY(this.x,this.y);
+        if((new Date()).getTime()-discon.getTime()<=200) {
+            //log.info("log: выброс");
+            setBlockXY(this.x,this.y);
+            return null;
+        }
         for (Block block: GameActivity.blocks){
-            if(block.y ==this.y && block.x==this.x)
+            if(block.num == num)
                 continue;
             if(getRoundX()==block.getRoundX() &&  getRoundY()==block.getRoundY(size)) {
                 connected = true;
+                discon=null;
                 stone.start();
                 GameActivity.touchedBlock=-1;
                 return block;
@@ -80,11 +88,17 @@ public class Block {
         connected = GameActivity.blocks.size() ==1;
         boolean isTop=false;
         if(GameActivity.blocks.get(0).y == y)isTop=true;
+        if((new Date()).getTime()-discon.getTime()<=200) {
+            //log.info("log: выброс");
+            setBlockXY(this.x,this.y);
+            return false;
+        }
         if(getRoundY(size)== GameActivity.blocks.get(isTop?1:0).getRoundY() && getRoundX()== GameActivity.blocks.get(isTop?1:0).getRoundX()){
             this.x = GameActivity.blocks.get(0).x;
             this.y = GameActivity.blocks.get(0).y- GameActivity.blocks.get(0).size;
             setBlockXY(this.x,this.y);
             connected = true;
+            discon=null;
             stone.start();
             GameActivity.touchedBlock=-1;
             return true;
@@ -115,8 +129,11 @@ public class Block {
     void setOld(){
         image.setAlpha(0.6f);
     }
+    void setDiscon(){
+        discon = new Date();
+    }
     //чистая установка координат
-    private void setBlockXY(float x, float y){
+    void setBlockXY(float x, float y){
         if(logy==0)log.info("log: XY\n");
         logy=1;
         image.setX(x);

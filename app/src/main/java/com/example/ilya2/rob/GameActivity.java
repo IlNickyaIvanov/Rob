@@ -48,14 +48,12 @@ public class GameActivity extends AppCompatActivity {
     static SharedPreferences mSettings;
 
     Logger log = Logger.getLogger(GameActivity.class.getName());
-    static int logy=0;
+    Thread moveEvent;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//штука, чтобы экран не выключался :D не знаю зачем
-//        MyTimer timer = new MyTimer();
-//        timer.start();
         if (time == 0L) {
             time = SystemClock.uptimeMillis(); // вычисляем время
             handler.removeCallbacks(myRun);
@@ -114,7 +112,7 @@ public class GameActivity extends AppCompatActivity {
         robots = new Robot[SettingsActivity.robotsNum];//кол-во роботов из настроек
         robots[0] = new Robot(activity,0,0,2,squares);
         if(robots.length==2)robots[1] = new Robot(activity,squares[0].length-1,squares.length-1,0,squares);
-        else robots[1] = new Robot(activity,squares[0].length-1,0,3,squares);
+        else if(robots.length>1) robots[1] = new Robot(activity,squares[0].length-1,0,3,squares);
         if(robots.length>2)robots[2] = new Robot(activity,squares[0].length-1,squares.length-1,0,squares);
         if(robots.length>3)robots[3] = new Robot(activity,0,squares[0].length-1,1,squares);
         if(hunter!=null)
@@ -143,9 +141,9 @@ public class GameActivity extends AppCompatActivity {
                 block.delete();
             blocks.removeAll(blocks);
         }
-        comLim=10;
+        comLim=1;
         newCom=0;
-        textLim.setText("comLim "+String.valueOf(comLim-newCom));
+        textLim.setText("Энергия "+String.valueOf(comLim-newCom));
     }
 
     public void onPassStep(View view) {
@@ -197,18 +195,17 @@ public class GameActivity extends AppCompatActivity {
                 isStillAnimate=isStillAnimate||robots[i].anim;
                 gameOver=gameOver&&robots[i].broken;//gameOver если все роботы сломаны
             }
-            if(!isStillAnimate) {
-                if (ended && hunter.moveXY.size() == 0 && !gameOver && hunter.steps > 0) {
+            if(!isStillAnimate && ended) {
+                if (hunter.moveXY.size() == 0 && !gameOver && hunter.steps > 0) {
                     hunter.hunt();//метод, генерирующий путь до ближайшего робота
                 }
-                if (ended)
-                    move = !hunter.botMove();//метод возвращает steps==0
+                move = !hunter.botMove();//метод возвращает steps==0
                 move = hunter.anim;
                 if (!move) {
                     count = 1;
                     robots[activeRobot].startAnim();
                 }
-                textLim.setText("comLim " + String.valueOf(comLim - newCom));
+                textLim.setText("Энергия " + String.valueOf(comLim - newCom));
                 count=0;
             }}
         hunter.update();
@@ -221,8 +218,7 @@ public class GameActivity extends AppCompatActivity {
     public boolean onTouchEvent(MotionEvent event) {
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
-                logy=0;
-                log.info("log: Touch event\n");
+                //log.info("log: Touch event\n");
                 if(newCom>=comLim)break;
                 for (int i = 0; i<commands.length;++i)
                     if (commands[i].touched) {
@@ -234,27 +230,18 @@ public class GameActivity extends AppCompatActivity {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if(GameActivity.touchedBlock==-1) break;
-                if(logy==0)log.info("log: Move event\n");
-                logy=1;
-                Block to = null,that=blocks.get(touchedBlock);//to - к чему присоединяет, that - что присоединяет
-                if(that.checkTopConnection(event.getX(),event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
-                    blocks.remove(that);
-                    blocks.add(0,that);
-                    refreshBlocks();
-                }else{//установка координат косания и проверка на присоединение снизу
-                    to=that.setXY();
-                }
-                //добавление обьекта в список в нужное место
-                if(to!=null){
-                    blocks.remove(that);
-                    blocks.add(blocks.indexOf(to)+1,that);
-                    refreshBlocks();
+                if(GameActivity.touchedBlock!=-1){
+                    if(moveEvent==null || !moveEvent.isAlive()){
+                        Runnable r  = new BlockControler(event);
+                        moveEvent = new Thread(r);
+                        moveEvent.start();
+                    }
+                    int size=blocks.get(touchedBlock).size;
+                    blocks.get(touchedBlock).setBlockXY(event.getX()-size/2,event.getY()-size/2);
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                logy=2;
-                log.info("log: Up event\n");
+                //log.info("log: Up event\n");
                 if(blocks.size()==1){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
                     for (Command com: commands)
                         if(com.isUnderBlock(blocks.get(0))) {
@@ -273,7 +260,7 @@ public class GameActivity extends AppCompatActivity {
                 } //else block.touched = false; !!!!!
                 touchedBlock=-1;
                 refreshBlocks();
-                textLim.setText("comLim "+String.valueOf(comLim-newCom));
+                textLim.setText("Энергия "+String.valueOf(comLim-newCom));
                 //в коде используется кол-во новых блоков и лимит на их установку!
         }
         return true;
@@ -287,20 +274,6 @@ public class GameActivity extends AppCompatActivity {
          }
     }
 
-
-//    class MyTimer extends CountDownTimer {
-//        MyTimer() {
-//            super(Integer.MAX_VALUE, 1000/60);
-//        }
-//        @Override
-//        public void onTick(long millisIntilFinished) {
-//            if(move)update();
-//        }
-//        @Override
-//        public void onFinish() {
-//        }
-//    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -312,7 +285,7 @@ public class GameActivity extends AppCompatActivity {
     private Runnable myRun = new Runnable() {
         @Override
         public void run() {
-            handler.postDelayed(this, 1000/FPS_FOR_ANIMATION); // повторяем через каждые 10 милисекунд
+            handler.postDelayed(this, 1000/FPS_FOR_ANIMATION);
             if(move)update(); // вызываем обновлялку игры
         }
     };

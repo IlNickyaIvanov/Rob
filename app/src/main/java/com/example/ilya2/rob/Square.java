@@ -10,7 +10,7 @@ import android.widget.RelativeLayout;
     float x,y;
     static int size=50;
     static int startX,startY;
-    int ID_NUMBER;
+    int ID_NUMBER;// 1-роботы у hunter'а, 2-стены, 3-вопросы
         Square(Activity main, float x, float y,int id) {
         ID_NUMBER=id;
         image = new ImageView(main);

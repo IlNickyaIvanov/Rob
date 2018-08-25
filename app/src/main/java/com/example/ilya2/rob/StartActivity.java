@@ -13,22 +13,17 @@ import android.widget.RelativeLayout;
 
 public class StartActivity extends AppCompatActivity {
     Image red,purple;
-    Animation animAlpha;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
-        animAlpha = AnimationUtils.loadAnimation(this, R.anim.alpha);
-
     }
 
     public void onClickStart(View view) {
-        view.startAnimation(animAlpha);
         startActivity(new Intent(StartActivity.this,GameActivity.class));
     }
 
     public void onClickSettings(View view) {
-        view.startAnimation(animAlpha);
         startActivity(new Intent(StartActivity.this,SettingsActivity.class));
     }
     class Image{

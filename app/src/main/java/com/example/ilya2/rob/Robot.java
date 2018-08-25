@@ -15,8 +15,6 @@ public class Robot {
 
     boolean broken=false;//сломан ли робот
 
-    private final int SPEED = (int)(GameActivity.FPS_FOR_ANIMATION*0.6);
-
     private float x, y;
     int sqX, sqY;
     private float speedX,targetX,speedY,targetY;
@@ -44,8 +42,6 @@ public class Robot {
         this.y=y;targetY=y;
         this.sqX=sqX;
         this.sqY=sqY;
-//        MyTimer timer = new MyTimer();
-//        timer.start();
         rotation=90*(turn-1);
         targetAngle=rotation;
         image.setRotation(rotation);
@@ -69,8 +65,7 @@ public class Robot {
     void RobotMove(final int sqX, final int sqY) {
         if(sqX== GameActivity.hunter.sqX&&sqY== GameActivity.hunter.sqY) {
             moveXY.clear();
-            broken = true;
-            setAlpha(0.5f);
+            setBroken(true);
             GameActivity.hunter.findNewActiveRobot();
         }
         float x= GameActivity.squares[sqY][sqX].x;
@@ -86,15 +81,16 @@ public class Robot {
         boolean gameOver=true;
         for (int i=0;i<GameActivity.stuff.length;++i){
             if (GameActivity.stuff[i].sqX == sqX && GameActivity.stuff[i].sqY == sqY && !GameActivity.stuff[i].opened) {
-                GameActivity.comLim+=1;
+                if(GameActivity.stuff[i].type==1)GameActivity.comLim+=1;
+                else setBroken(true);
+                GameActivity.hunter.findNewActiveRobot();
                 GameActivity.stuff[i].open();
             }
             gameOver=gameOver&&GameActivity.stuff[i].opened;
         }
         if(!broken)for(int i=0;i<GameActivity.robots.length;++i)
             if(GameActivity.robots[i].broken && sqX==GameActivity.robots[i].sqX&&sqY==GameActivity.robots[i].sqY) {
-                GameActivity.robots[i].broken = false;
-                GameActivity.robots[i].setAlpha(1f);
+                GameActivity.robots[i].setBroken(false);
             }
         if(gameOver && !GameActivity.gameOver && !Tutorial.isTutorial){
             Utils.AlertDialog(activity,"Конец игры","Вы победили","Еще раз");
@@ -167,16 +163,13 @@ public class Robot {
             parent.removeView(image);
         }catch (Throwable t){}
     }
-//    class MyTimer extends CountDownTimer {
-//        MyTimer() {
-//            super(Integer.MAX_VALUE, onTickMove);
-//        }
-//        @Override
-//        public void onTick(long millisUntilFinished) {
-//            update();
-//        }
-//        @Override
-//        public void onFinish() {
-//        }
-//    }
+    void setBroken(boolean isBrok){
+        if(isBrok){
+            broken = true;
+            setAlpha(0.5f);
+        }else{
+            broken = false;
+            setAlpha(1.0f);
+        }
+    }
 }

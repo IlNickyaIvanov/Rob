@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".StartActivity"
-    android:background="#292929">
+    android:background="#292929"
+    >
 
     <ImageView
         android:id="@+id/imageView"
@@ -25,7 +26,7 @@
             android:layout_gravity="center"
             android:layout_marginBottom="5dp"
             android:layout_marginTop="200dp"
-            android:background="@drawable/strt_btn"
+            android:background="@drawable/my_button_red"
             android:onClick="onClickStart"
             android:text="start"
             android:textSize="24sp" />
@@ -37,7 +38,7 @@
             android:layout_gravity="center"
             android:layout_marginBottom="100dp"
             android:layout_marginTop="5dp"
-            android:background="@drawable/set_btn"
+            android:background="@drawable/my_button_pink"
             android:onClick="onClickSettings"
             android:text="settings"
             android:textSize="23sp"

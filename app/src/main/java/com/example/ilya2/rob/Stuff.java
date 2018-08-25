@@ -38,6 +38,18 @@ public class Stuff {
         activity.addContentView(stuff,new RelativeLayout.LayoutParams(size,size));
 
     }
+    Stuff(Activity activity, int sqX, int sqY,int type){
+        this.size = Square.size;
+        x = GameActivity.squares[sqX][sqY].x;
+        y = GameActivity.squares[sqX][sqY].y;
+        this.type = type;
+        stuff = new ImageView(activity);
+        stuff.setX(x);
+        stuff.setY(y);
+        stuff.setImageResource(R.drawable.question);
+        activity.addContentView(stuff,new RelativeLayout.LayoutParams(size,size));
+
+    }
     void open(){
         switch (type){
             case (0):
@@ -68,7 +80,12 @@ public class Stuff {
                 check=false;
             if(GameActivity.map[sqXY[1]][sqXY[0]]==2)
                 check=false;
-            if(check)return sqXY;
+            if(GameActivity.map[sqXY[1]][sqXY[0]]==3)
+                check=false;
+            if(check){
+                GameActivity.map[sqXY[1]][sqXY[0]]=3;
+                return sqXY;
+            }
         }
     }
     void setXY(){

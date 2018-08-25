@@ -5,4 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="purple">#ff4fff</color>
     <color name="light_red">#ff422f</color>
+    <color name="my_green">#669900</color>
+    <color name="my_orange">#ff8800</color>
 </resources>
