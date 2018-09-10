@@ -17,8 +17,8 @@ public class Block {
     ImageView image;
     int size=Command.size*4/5, alpha; // размер картинки, врещение, прозрачность
     boolean connected=false;
-    private int num;
-     float x,y;
+    private int num;//порядковый номер в листе blocks
+    float x,y;
     int type;
     boolean newCom=true;
     private final MediaPlayer bubble,stone;
@@ -26,7 +26,7 @@ public class Block {
     int logy=0;
     Date discon;
     @SuppressLint("ClickableViewAccessibility")
-    Block(GameActivity main, float x, float y, int type, final int number) {
+    Block(Activity main, float x, float y, int type, final int number) {
         this.num = number;
         this.type = type;
         this.x=x;
@@ -52,7 +52,10 @@ public class Block {
         public boolean onTouch(View v, MotionEvent event)
         {
             logy=0;
-            //log.info("log: Block touched\n");
+            log.info("log: Block touched\n");
+            setDiscon();
+            GameActivity.longClick = new Date();
+            GameActivity.still = true;
             GameActivity.touchedBlock=num;
             return false;
         }
@@ -63,7 +66,7 @@ public class Block {
     //установка координат с проверкой на присоединение
     Block setXY(){
         //setBlockXY(this.x,this.y);
-        if((new Date()).getTime()-discon.getTime()<=200) {
+        if((new Date()).getTime()-discon.getTime()<=501) {
             //log.info("log: выброс");
             setBlockXY(this.x,this.y);
             return null;
@@ -88,7 +91,7 @@ public class Block {
         connected = GameActivity.blocks.size() ==1;
         boolean isTop=false;
         if(GameActivity.blocks.get(0).y == y)isTop=true;
-        if((new Date()).getTime()-discon.getTime()<=200) {
+        if((new Date()).getTime()-discon.getTime()<=501) {
             //log.info("log: выброс");
             setBlockXY(this.x,this.y);
             return false;
@@ -136,6 +139,8 @@ public class Block {
     void setBlockXY(float x, float y){
         if(logy==0)log.info("log: XY\n");
         logy=1;
+        this.x = x;
+        this.y = y;
         image.setX(x);
         image.setY(y);
     }

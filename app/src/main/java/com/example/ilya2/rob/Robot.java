@@ -16,7 +16,7 @@ public class Robot {
     boolean broken=false;//сломан ли робот
 
     private float x, y;
-    int sqX, sqY;
+    int sqX, sqY,direction;
     private float speedX,targetX,speedY,targetY;
     private int speedRotate,targetAngle,rotation;
     boolean anim=false;
@@ -42,6 +42,7 @@ public class Robot {
         this.y=y;targetY=y;
         this.sqX=sqX;
         this.sqY=sqY;
+        direction = turn;
         rotation=90*(turn-1);
         targetAngle=rotation;
         image.setRotation(rotation);
@@ -79,14 +80,16 @@ public class Robot {
         this.sqY = sqY;
 
         boolean gameOver=true;
-        for (int i=0;i<GameActivity.stuff.length;++i){
-            if (GameActivity.stuff[i].sqX == sqX && GameActivity.stuff[i].sqY == sqY && !GameActivity.stuff[i].opened) {
-                if(GameActivity.stuff[i].type==1)GameActivity.comLim+=1;
-                else setBroken(true);
-                GameActivity.hunter.findNewActiveRobot();
-                GameActivity.stuff[i].open();
+        for (int i=0;i<GameActivity.stuff.size();++i){
+            if (GameActivity.stuff.get(i).sqX == sqX && GameActivity.stuff.get(i).sqY == sqY && !GameActivity.stuff.get(i).opened) {
+                if(GameActivity.stuff.get(i).type==1)GameActivity.comLim+=1;
+                else {
+                    setBroken(true);
+                    GameActivity.hunter.findNewActiveRobot();
+                }
+                GameActivity.stuff.get(i).open();
             }
-            gameOver=gameOver&&GameActivity.stuff[i].opened;
+            gameOver=gameOver&&GameActivity.stuff.get(i).opened;
         }
         if(!broken)for(int i=0;i<GameActivity.robots.length;++i)
             if(GameActivity.robots[i].broken && sqX==GameActivity.robots[i].sqX&&sqY==GameActivity.robots[i].sqY) {
@@ -106,7 +109,7 @@ public class Robot {
         image.startAnimation(animation);
     }
     void stopAnim(){
-        image.clearAnimation();
+        if(image!=null)image.clearAnimation();
     }
 
     void update(){
@@ -138,6 +141,7 @@ public class Robot {
     void execute(ArrayList<Block> blocks){
         moveXY = comPars.parser(blocks);
     }
+    //этот метод вызывается из игры
     boolean move(){
         if(!broken && moveXY.size()>0 && !anim){
             int[]xy=moveXY.poll();
@@ -145,6 +149,7 @@ public class Robot {
                 RobotMove(xy[0],xy[1]);//moveXY - это очередь в которой заданы положения робота[2] или повороты[1]
             else {
                 image.setRotation(targetAngle);
+                direction = comPars.turn;
                 targetAngle+=xy[0];
                 speedRotate=xy[0]/ 40;
                 anim=true;
@@ -161,6 +166,7 @@ public class Robot {
         try{
             FrameLayout parent = (FrameLayout) image.getParent();
             parent.removeView(image);
+            image = null;
         }catch (Throwable t){}
     }
     void setBroken(boolean isBrok){

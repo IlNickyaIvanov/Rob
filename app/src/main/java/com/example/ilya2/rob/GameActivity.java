@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -14,6 +15,8 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public class GameActivity extends AppCompatActivity {
@@ -24,6 +27,11 @@ public class GameActivity extends AppCompatActivity {
     int count=0;//это счетчик для таймера
     final static int FPS_FOR_ANIMATION=60;
     static boolean gameOver=false;
+
+    static boolean still;
+    static Date longClick;
+    int roundX=-1,roundY=-1;//штуки для определения долгого нажатия
+    boolean moveALL=false;
 
     static int activeRobot=0;
     static int comLim=1;
@@ -38,7 +46,7 @@ public class GameActivity extends AppCompatActivity {
     static Command commands[];
     static ArrayList<Block> blocks;
     static int touchedBlock=-1;//-1 значение, при котором нет тронутых))) блоков
-    static Stuff stuff[];
+    static ArrayList<Stuff>stuff;
     static int screenWidth,screenHeight;
 
     static TextView textLim;
@@ -48,7 +56,6 @@ public class GameActivity extends AppCompatActivity {
     static SharedPreferences mSettings;
 
     Logger log = Logger.getLogger(GameActivity.class.getName());
-    Thread moveEvent;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +68,7 @@ public class GameActivity extends AppCompatActivity {
         }
         textLim = findViewById(R.id.stepLim);
         startGame(this);
+
         mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
         if(!mSettings.contains(APP_PREFERENCES_TUTOR)) {
             SharedPreferences.Editor editor = mSettings.edit();
@@ -72,6 +80,7 @@ public class GameActivity extends AppCompatActivity {
         }
         else Utils.TwoButtonAllertDialog(this,"Туториал",
                 "Вы уже прошли обучение. Хотите повторить?","Нет","Ага");
+
         commands = new Command[3];
         blocks = new ArrayList<>();
         int step = screenHeight/6+(screenHeight*4/5-Command.size*commands.length)/2;
@@ -101,6 +110,28 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    static void setNewMap(int [][] mapy,Activity activity){
+        for (Square[] sqs:squares)
+            for (Square sq:sqs)
+                sq.delete();
+        map = mapy;
+        squares = new Square[map.length][map[0].length];
+        Square.startX = (screenWidth/2+(screenWidth/2-Square.size*map[0].length)/2);
+        Square.startY = (screenHeight-Square.size*map.length)/2;
+        for(int i=0;i<map.length;i++){
+            for(int j=0;j<map[0].length;j++){
+                squares[i][j] = new Square(activity,j*(Square.size)+Square.startX ,i*(Square.size)+Square.startY,map[i][j]);
+            }
+        }
+        for(int i = 0;i<robots.length;++i){
+            if(robots[i].image==null)continue;
+            robots[i].delete();
+            robots[i] = new Robot(activity,robots[i].sqX,robots[i].sqY,robots[i].direction,squares);
+        }
+        hunter.delete();
+        hunter = new Hunter(activity,hunter.sqX,hunter.sqY,map);
+    }
+
     static void startGame(Activity activity){
         activeRobot=0;
         gameOver=false;
@@ -128,13 +159,15 @@ public class GameActivity extends AppCompatActivity {
             squares[xy[1]][xy[0]].image.setAlpha(0f);
         }
 
-        if(stuff!=null)
-            for (Stuff stf:stuff)
+        if(stuff!=null) {
+            for (Stuff stf : stuff)
                 stf.delete();
+            stuff.removeAll(stuff);
+        }
+        else stuff = new ArrayList<>();
         //рандомные вопросы из настроек
-        stuff = new Stuff[SettingsActivity.stuffNum];
-        for (int i=0;i<stuff.length;i++){
-            stuff[i]=new Stuff(activity,(int) Math.round(Math.random()));
+        for (int i = 0; i< SettingsActivity.stuffNum; i++){
+            stuff.add(new Stuff(activity,(int) Math.round(Math.random())));
         }
         if(blocks !=null){
             for (Block block: blocks)
@@ -212,6 +245,7 @@ public class GameActivity extends AppCompatActivity {
         for (int i=0;i<robots.length;++i)
             robots[i].update();
         ++count;
+
     }
 
     @Override
@@ -230,14 +264,34 @@ public class GameActivity extends AppCompatActivity {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if(GameActivity.touchedBlock!=-1){
-                    if(moveEvent==null || !moveEvent.isAlive()){
-                        Runnable r  = new BlockControler(event);
-                        moveEvent = new Thread(r);
-                        moveEvent.start();
-                    }
+                if(touchedBlock!=-1){
+                    if(moveALL) {
+                        moveBlocks(event.getX(), event.getY());
+                        break;
+                    }//установка координатов касания
                     int size=blocks.get(touchedBlock).size;
                     blocks.get(touchedBlock).setBlockXY(event.getX()-size/2,event.getY()-size/2);
+
+                    if(still)
+                        checkLongClick(event.getX()-size/2,event.getY()-size/2);
+
+                    Block to = null, that = blocks.get(touchedBlock);//to - к чему присоединяет, that - что присоединяет
+                    if(that.discon==null)that.setDiscon();
+                    if (that.checkTopConnection(event.getX(), event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
+                        blocks.remove(that);
+                        blocks.add(0, that);
+                        refreshBlocks();
+                        log.info("log: connected!\n");
+                    } else {//установка координат косания и проверка на присоединение снизу
+                        to = that.setXY();
+                    }
+                    //добавление обьекта в список в нужное место
+                    if (to != null) {
+                        log.info("log: connected!\n");
+                        blocks.remove(that);
+                        blocks.add(blocks.indexOf(to) + 1, that);
+                        refreshBlocks();
+                    }
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -259,6 +313,11 @@ public class GameActivity extends AppCompatActivity {
                     blocks.remove(blocks.get(touchedBlock));
                 } //else block.touched = false; !!!!!
                 touchedBlock=-1;
+
+                moveALL=false;
+                longClick = null;
+                still = false;
+
                 refreshBlocks();
                 textLim.setText("Энергия "+String.valueOf(comLim-newCom));
                 //в коде используется кол-во новых блоков и лимит на их установку!
@@ -266,7 +325,7 @@ public class GameActivity extends AppCompatActivity {
         return true;
     }
 
-     void refreshBlocks(){
+     static void refreshBlocks(){
         //ориентация всего блока команд по первому
          for(int i=0;i<blocks.size();i++){
             blocks.get(i).setNum(i);
@@ -274,12 +333,43 @@ public class GameActivity extends AppCompatActivity {
          }
     }
 
+    void checkLongClick(float x,float y){
+        if(roundX==-1 && roundY==-1){
+            roundX = Math.round(x-x%100);
+            roundY = Math.round(y-y%100);
+        }else if(roundX!=Math.round(x-x%100) || roundY!=Math.round(y-y%100)){
+            still=false;
+            longClick = null;
+            roundX = -1;
+            roundY = -1;
+        }
+        if(still && (new Date()).getTime()-longClick.getTime()>500) {
+            moveALL = true;
+            still = false;
+            blocks.get(touchedBlock).connected = true;
+            blocks.get(touchedBlock).discon = null;
+            long mills = 100L;
+            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            assert vibrator != null;
+            if (vibrator.hasVibrator()) {
+                vibrator.vibrate(mills);
+            }
+        }
+
+    }
+
+    void moveBlocks(float x,float y){
+        float deltaY = blocks.get(touchedBlock).y-y;
+        blocks.get(0).setBlockXY(x,blocks.get(0).y-deltaY);
+        refreshBlocks();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
         move = false;
-
+        Tutorial.onTutorComplete();
     }
 
     private Runnable myRun = new Runnable() {
@@ -287,6 +377,8 @@ public class GameActivity extends AppCompatActivity {
         public void run() {
             handler.postDelayed(this, 1000/FPS_FOR_ANIMATION);
             if(move)update(); // вызываем обновлялку игры
+            if(roundX!=-1 && roundY!=-1)
+                checkLongClick(roundX,roundY);
         }
     };
 

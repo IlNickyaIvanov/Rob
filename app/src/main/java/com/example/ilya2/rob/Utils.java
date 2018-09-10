@@ -60,7 +60,7 @@ class Utils {
                 SharedPreferences.Editor editor = GameActivity.mSettings.edit();
                 editor.putBoolean(GameActivity.APP_PREFERENCES_TUTOR, false);
                 editor.apply();
-                Tutorial tutor = new Tutorial(main);
+                new Tutorial(main);
                 dialog.cancel();
                 ADVisible=false;
             }

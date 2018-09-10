@@ -7,10 +7,9 @@ import java.util.Queue;
 public class CommandParser {
     private int []direction;
     private Square squares[][];
-    private int x,y;
-    private int turn,turns[][]={{-1,0},{0,-1},{1,0},{0,1}};//налево 0,вверх 1,направо 2,вниз 3
+    private int x,y,turns[][]={{-1,0},{0,-1},{1,0},{0,1}};//налево 0,вверх 1,направо 2,вниз 3;
+    int turn;
     private Queue<int[]> moveXY;
-    String error=null;
     CommandParser(Square squares[][],int x,int y,int turn){
         this.turn = turn;
         direction=turns[turn];

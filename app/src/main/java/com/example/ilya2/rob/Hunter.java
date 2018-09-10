@@ -144,10 +144,12 @@ public class Hunter {
         }
     }
 
-    void setXY(){
+    //фишка - метод обнуляет шаги
+    void setXY(int x,int y){
+        moveXY.removeAll(moveXY);
         anim=false;
-        sqX = 2;
-        sqY = 2;
+        sqX = x;
+        sqY = y;
         this.x = GameActivity.squares[sqY][sqX].x;
         this.y = GameActivity.squares[sqY][sqX].y;
         image.setX(this.x);

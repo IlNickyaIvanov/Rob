@@ -29,8 +29,8 @@ public class Stuff {
     Stuff(Activity activity, ArrayList<ArrayList<Square>> map){
         this.size = Square.size;
         int []sqXY=SettingsActivity.randomSqXY();
-        x = map.get(sqXY[1]).get(sqXY[0]).x;
-        y = map.get(sqXY[1]).get(sqXY[0]).y;
+        x = map.get(sqXY[1]).get(sqXY[0]).x;sqX=sqXY[0];
+        y = map.get(sqXY[1]).get(sqXY[0]).y;sqY=sqXY[1];
         stuff = new ImageView(activity);
         stuff.setX(x);
         stuff.setY(y);
@@ -40,8 +40,8 @@ public class Stuff {
     }
     Stuff(Activity activity, int sqX, int sqY,int type){
         this.size = Square.size;
-        x = GameActivity.squares[sqX][sqY].x;
-        y = GameActivity.squares[sqX][sqY].y;
+        x = GameActivity.squares[sqY][sqX].x;this.sqX=sqX;
+        y = GameActivity.squares[sqY][sqX].y;this.sqY=sqY;
         this.type = type;
         stuff = new ImageView(activity);
         stuff.setX(x);
@@ -60,6 +60,10 @@ public class Stuff {
                 break;
         }
         opened = true;
+    }
+    void close(){
+        stuff.setImageResource(R.drawable.question);
+        opened = false;
     }
     void delete(){
         opened = true;
