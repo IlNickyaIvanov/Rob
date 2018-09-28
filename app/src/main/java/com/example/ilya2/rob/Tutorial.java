@@ -15,9 +15,10 @@ public class Tutorial {
     static MyTimer timer;
     private Activity activity;
     private ArrayList<String> steps;
+    private Table table;
     private int stepNum=0;
     private int rX,rY,hX,hY,direction,power;//координаты в момент начала выполнения задания
-    private ArrayList<Integer> sblocks;//лист содержит типы блоков, из оргинальной последовательности
+    private ArrayList<int[]> sblocks;//лист содержит типы блоков, из оргинальной последовательности
     Tutorial(Activity main){
         isTutorial = true;
         activity = main;
@@ -70,7 +71,37 @@ public class Tutorial {
             onTutorComplete();
         }
         else {//следующее сообщение
-            Utils.AlertDialog(activity, "Обучение"+ " " + "1" + "." + stepNum, setTask(steps.get(stepNum)), "оK");
+            String msg = setTask(steps.get(stepNum));
+            if(Table.isTableVisible)table.delete();
+            switch (stepNum){
+                case 1:
+                    table=new Table(activity,msg,GameActivity.commands[1].image,"right");
+                    break;
+
+                case 2:
+                    table = new Table(activity,"Перемести блок и нажми ШАГ",1);
+                case 5:
+                    if(stepNum!=2)table = new Table(activity,"Соедини блоки, как на картинке",2);
+                case 7:
+                    new Table(activity,msg,GameActivity.stuff.get(0).stuff,"down");
+                    break;
+
+                case 4:
+                    table=new Table(activity,msg,activity.findViewById(R.id.stepLim),"down");
+                    break;
+                case 6:
+                    table=new Table(activity,msg,GameActivity.hunter.image,"down");
+                    break;
+                case 9:
+                    table=new Table(activity,msg,GameActivity.robots[1].image,"left");
+                    break;
+                default:
+                    Utils.AlertDialog(activity, "Обучение"+ " " + "1" + "." + stepNum,
+                            setTask(steps.get(stepNum)), "оK");
+                    break;
+
+            }
+
             stepNum++;
         }
     }
@@ -78,7 +109,7 @@ public class Tutorial {
     static void  onTutorComplete(){
         isTutorial = false;
         task = false;
-        timer.cancel();
+        if(timer!=null )timer.cancel();
     }
 
     private String setTask(String step) {
@@ -116,6 +147,12 @@ public class Tutorial {
                     GameActivity.stuff.remove(0);
                 GameActivity.robots[1] = new Robot(activity,GameActivity.squares[0].length-1,GameActivity.squares.length-1,0,GameActivity.squares);
                 GameActivity.hunter.findNewActiveRobot();
+                GameActivity.robots[0].stopAnim();
+                GameActivity.robots[1].startAnim();
+                for (Stuff stf:GameActivity.stuff)
+                    stf.delete();
+                for(int i=0;i<GameActivity.stuff.size();++i)
+                    GameActivity.stuff.remove(0);
                 task = false;
                 return false;
             }
@@ -134,11 +171,15 @@ public class Tutorial {
             for (int i = 0; i < GameActivity.stuff.size(); i++) {
                 task = !GameActivity.stuff.get(i).opened || task;
             }
+            if(stepNum==9 && GameActivity.robots[0].broken){
+                task=false;
+            }
             if(!task){
                 for (Stuff stf:GameActivity.stuff)
                     stf.delete();
                 for(int i=0;i<GameActivity.stuff.size();++i)
                     GameActivity.stuff.remove(0);
+                table.delete();
             }
         }
         return task;
@@ -156,7 +197,7 @@ public class Tutorial {
 
     void copyBlocks(){
         for(Block block: GameActivity.blocks){
-            sblocks.add(block.type);
+            sblocks.add(new int[]{block.type,(block.newCom)?1:0});
         }
     }
 
@@ -168,11 +209,11 @@ public class Tutorial {
             block.delete();
         }
         GameActivity.blocks.removeAll(GameActivity.blocks);
-        GameActivity.blocks.add(new Block(activity,x,y,sblocks.get(0),0));
-        GameActivity.blocks.get(0).setOld();
+        GameActivity.blocks.add(new Block(activity,x,y,sblocks.get(0)[0],0));
+        GameActivity.blocks.get(0).setOld(sblocks.get(0)[1]==0);
         for(int i=1;i<sblocks.size();++i){
-            GameActivity.blocks.add(new Block(activity,0,0,sblocks.get(i),0));
-            GameActivity.blocks.get(i).setOld();
+            GameActivity.blocks.add(new Block(activity,0,0,sblocks.get(i)[0],0));
+            GameActivity.blocks.get(i).setOld(sblocks.get(i)[1]==0);
         }
         GameActivity.refreshBlocks();
     }
@@ -201,7 +242,7 @@ public class Tutorial {
         }
         @Override
         public void onTick(long millisUntilFinished) {
-            if (steps != null  && !Utils.isADVisible())update();
+            if (steps != null  && !Utils.isADVisible() && !Table.isTableVisible)update();
         }
         @Override
         public void onFinish() {

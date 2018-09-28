@@ -9,14 +9,14 @@ import android.widget.RelativeLayout;
 import java.util.ArrayList;
 
 public class Stuff {
-    private ImageView stuff;
+    ImageView stuff;
     private float x,y;
     int sqX=-1,sqY=-1;
     int type,size;
     boolean opened = false;
-    Stuff (Activity main, int type){
+    Stuff (Activity main, float type){
         this.size = Square.size;
-        this.type = type;
+        this.type = (type>0.1)?1:0;//баланс 10%, что в стафе будет молния
         int []sqXY=randomSqXY();
         x = GameActivity.squares[sqXY[1]][sqXY[0]].x;sqX=sqXY[0];
         y = GameActivity.squares[sqXY[1]][sqXY[0]].y;sqY=sqXY[1];

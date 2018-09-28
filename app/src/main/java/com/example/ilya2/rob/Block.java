@@ -129,8 +129,12 @@ public class Block {
         parent.removeView(image);
         bubble.start();
     }
-    void setOld(){
-        image.setAlpha(0.6f);
+    void setOld(boolean o){
+        if(o)
+            image.setAlpha(0.6f);
+        else
+            image.setAlpha(1f);
+        newCom = !o;
     }
     void setDiscon(){
         discon = new Date();

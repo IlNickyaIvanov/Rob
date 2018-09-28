@@ -1,22 +1,54 @@
 package com.example.ilya2.rob;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Switch;
 
 public class StartActivity extends AppCompatActivity {
     Image red,purple;
+
+    public static final String APP_PREFERENCES = "mysettings";
+    public static final String APP_PREFERENCES_OFFER = "offer";
+    static SharedPreferences mSettings;
+
+    static Switch sw;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
+
+        mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+        if(!mSettings.contains(APP_PREFERENCES_OFFER)) {
+            SharedPreferences.Editor editor = mSettings.edit();
+            editor.putBoolean(APP_PREFERENCES_OFFER, true);
+            editor.apply();
+        }
+        sw = findViewById(R.id.switch1);
+        if(!mSettings.getBoolean(APP_PREFERENCES_OFFER,false )){
+          sw.setChecked(false);
+        }
+        if (sw != null) {
+            sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    SharedPreferences.Editor editor = mSettings.edit();
+                    editor.putBoolean(APP_PREFERENCES_OFFER, sw.isChecked());
+                    editor.apply();
+                }
+            });
+        }
     }
 
     public void onClickStart(View view) {

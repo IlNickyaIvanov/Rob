@@ -19,6 +19,9 @@ public class SettingsActivity extends AppCompatActivity {
     static ArrayList<Robot> robots;
     SeekBar seekBar,seekBar2,seekBar3,seekBar4;
     TextView textSize,textWall,textStuff,textRobots;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

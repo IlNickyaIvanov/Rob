@@ -171,6 +171,7 @@ public class Robot {
     }
     void setBroken(boolean isBrok){
         if(isBrok){
+            moveXY.removeAll(moveXY);
             broken = true;
             setAlpha(0.5f);
         }else{

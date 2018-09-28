@@ -78,7 +78,7 @@ public class GameActivity extends AppCompatActivity {
         if(!mSettings.getBoolean(APP_PREFERENCES_TUTOR,false )){
             new Tutorial(this);
         }
-        else Utils.TwoButtonAllertDialog(this,"Туториал",
+        else if(StartActivity.sw.isChecked())Utils.TwoButtonAllertDialog(this,"Туториал",
                 "Вы уже прошли обучение. Хотите повторить?","Нет","Ага");
 
         commands = new Command[3];
@@ -167,7 +167,7 @@ public class GameActivity extends AppCompatActivity {
         else stuff = new ArrayList<>();
         //рандомные вопросы из настроек
         for (int i = 0; i< SettingsActivity.stuffNum; i++){
-            stuff.add(new Stuff(activity,(int) Math.round(Math.random())));
+            stuff.add(new Stuff(activity,(float)Math.random()));
         }
         if(blocks !=null){
             for (Block block: blocks)
@@ -206,7 +206,7 @@ public class GameActivity extends AppCompatActivity {
 
         for (Block block:blocks) {
             block.newCom = false;
-            block.setOld();
+            block.setOld(true);
         }
         newCom=0;
         do {
@@ -377,6 +377,11 @@ public class GameActivity extends AppCompatActivity {
         public void run() {
             handler.postDelayed(this, 1000/FPS_FOR_ANIMATION);
             if(move)update(); // вызываем обновлялку игры
+            TextView t = findViewById(R.id.just_move);
+            if(blocks.size()==0 && t.getText().equals(""))
+                t.setText("Просто переместите блок сюда...");
+            else if(t.getText().length()>0)
+                t.setText("");
             if(roundX!=-1 && roundY!=-1)
                 checkLongClick(roundX,roundY);
         }
