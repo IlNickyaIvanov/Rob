@@ -64,6 +64,7 @@
                 android:id="@+id/just_move"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginLeft="100dp"
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="Просто переместите блок сюда..." />

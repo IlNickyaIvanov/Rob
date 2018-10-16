@@ -44,12 +44,14 @@ public class GameActivity extends AppCompatActivity {
     static String AlertDialogMessage;
     static boolean move=false;
     static Command commands[];
+    static Command trash;
     static ArrayList<Block> blocks;
     static int touchedBlock=-1;//-1 значение, при котором нет тронутых))) блоков
     static ArrayList<Stuff>stuff;
     static int screenWidth,screenHeight;
 
     static TextView textLim;
+    TextView t;
 
     public static final String APP_PREFERENCES = "mysettings";
     public static final String APP_PREFERENCES_TUTOR = "tutor";
@@ -67,6 +69,8 @@ public class GameActivity extends AppCompatActivity {
             handler.postDelayed(myRun, 100); // через столько милисикунд стартует
         }
         textLim = findViewById(R.id.stepLim);
+        t = findViewById(R.id.just_move);
+        t.setText("Просто переместите блок сюда...");
         startGame(this);
 
         mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
@@ -84,6 +88,7 @@ public class GameActivity extends AppCompatActivity {
         commands = new Command[3];
         blocks = new ArrayList<>();
         int step = screenHeight/6+(screenHeight*4/5-Command.size*commands.length)/2;
+        trash = new Command(this,5,step-Command.size-5,-1);
         for (int i=0;i<commands.length;i++) {
             commands[i] = new Command(this,5 , step+i*(Command.size+10), i);
         }
@@ -257,6 +262,7 @@ public class GameActivity extends AppCompatActivity {
                 for (int i = 0; i<commands.length;++i)
                     if (commands[i].touched) {
                         newCom++;
+                        t.setText("");
                         blocks.add(new Block(this, commands[i].x, commands[i].y,commands[i].type,blocks.size()));
                         touchedBlock=blocks.size()-1;
                         commands[i].touched=false;
@@ -265,6 +271,8 @@ public class GameActivity extends AppCompatActivity {
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(touchedBlock!=-1){
+                    if(trash.image.getAlpha()!=1f && blocks.size()==1)
+                        trash.startAnim();
                     if(moveALL) {
                         moveBlocks(event.getX(), event.getY());
                         break;
@@ -303,11 +311,24 @@ public class GameActivity extends AppCompatActivity {
                                 newCom--;
                             blocks.get(0).delete();
                             blocks.remove(blocks.get(0));
+                            touchedBlock=-1;
                             break;
                         }
+                        if(blocks.size()==0)
+                            t.setText("Просто переместите блок сюда...");
                 }
+                if(blocks.size()==1 && touchedBlock!=-1 && trash.isUnderBlock(blocks.get(touchedBlock))){
+                    if(blocks.get(touchedBlock).newCom)
+                        newCom--;
+                    blocks.get(touchedBlock).delete();
+                    blocks.remove(blocks.get(0));
+                    touchedBlock=-1;
+                    break;
+                }
+                if(trash.image.getAlpha()!=0f)
+                    trash.stopAnim();
                 //удаление не присоединенного блока
-                if (touchedBlock!=-1 && blocks.size()>0 &&!blocks.get(touchedBlock).connected) {
+                if (touchedBlock!=-1 && blocks.size()>0 &&!blocks.get(touchedBlock).connected && !moveALL) {
                     if(blocks.get(touchedBlock).newCom)newCom--;
                     blocks.get(touchedBlock).delete();
                     blocks.remove(blocks.get(touchedBlock));
@@ -377,11 +398,6 @@ public class GameActivity extends AppCompatActivity {
         public void run() {
             handler.postDelayed(this, 1000/FPS_FOR_ANIMATION);
             if(move)update(); // вызываем обновлялку игры
-            TextView t = findViewById(R.id.just_move);
-            if(blocks.size()==0 && t.getText().equals(""))
-                t.setText("Просто переместите блок сюда...");
-            else if(t.getText().length()>0)
-                t.setText("");
             if(roundX!=-1 && roundY!=-1)
                 checkLongClick(roundX,roundY);
         }
