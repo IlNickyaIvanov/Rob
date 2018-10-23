@@ -10,7 +10,7 @@ import android.widget.RelativeLayout;
 
 public class Command {
     ImageView image;
-    static int size= (int) Math.round(GameActivity.screenHeight/ GameActivity.commands.length/1.5-50), alpha; // размер картинки, врещение, прозрачность
+    static int size= (int) Math.round(GameActivity.screenHeight/ GameActivity.commands.length/1.3-35), alpha; // размер картинки, прозрачность
     boolean touched=false;
     float x,y;
     int type;
@@ -34,6 +34,9 @@ public class Command {
             case (2):
                 image.setImageResource(R.drawable.left);
                 break;
+            case (3):
+                image.setImageResource(R.drawable.x2);
+                break;
         }
         main.addContentView(image, new RelativeLayout.LayoutParams(size, size));
         if(type!=-1)image.setOnTouchListener(new View.OnTouchListener() {
@@ -51,38 +54,12 @@ public class Command {
 
     void startAnim(){
         image.setAlpha(1f);
-//        AlphaAnimation animation = new AlphaAnimation(0f,1f);
-//        animation.setDuration(1000);
-//        image.startAnimation(animation);
-//        animation.setAnimationListener(new Animation.AnimationListener() {
-//            @Override
-//            public void onAnimationStart(Animation animation) { }
-//            @Override
-//            public void onAnimationEnd(Animation animation) {
-//                image.setAlpha(1f);
-//            }
-//            @Override
-//            public void onAnimationRepeat(Animation animation) { }
-//        });
     }
     void stopAnim(){
         if(image!=null) {
             image.clearAnimation();
             image.setAlpha(0f);
         }
-//        AlphaAnimation animation = new AlphaAnimation(1f,0f);
-//        animation.setDuration(1000);
-//        image.startAnimation(animation);
-//        animation.setAnimationListener(new Animation.AnimationListener() {
-//            @Override
-//            public void onAnimationStart(Animation animation) { }
-//            @Override
-//            public void onAnimationEnd(Animation animation) {
-//                image.setAlpha(0f);
-//            }
-//            @Override
-//            public void onAnimationRepeat(Animation animation) { }
-//        });
     }
 
     boolean isUnderBlock(Block block){

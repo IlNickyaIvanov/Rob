@@ -10,6 +10,7 @@ public class CommandParser {
     private int x,y,turns[][]={{-1,0},{0,-1},{1,0},{0,1}};//налево 0,вверх 1,направо 2,вниз 3;
     int turn;
     private Queue<int[]> moveXY;
+    boolean insideLoop = false;
     CommandParser(Square squares[][],int x,int y,int turn){
         this.turn = turn;
         direction=turns[turn];
@@ -20,8 +21,8 @@ public class CommandParser {
 
     Queue<int[]> parser(ArrayList<Block> blocks){
         squares = GameActivity.squares.clone();
-        for (Block block : blocks) {
-            switch (block.type) {
+        for (int i=0;i<blocks.size();i++) {
+            switch (blocks.get(i).type) {
                 case (0):
                     if ((direction[0] == 1 && x < squares[0].length-1
                             || direction[0] == -1 && x > 0)&&squares[y][x+direction[0]].ID_NUMBER!=2 || direction[0] == 0)
@@ -47,6 +48,14 @@ public class CommandParser {
                     direction = turns[turn];
                     int[] lxy = {-90};//налево
                     moveXY.add(lxy);
+                    break;
+                case (3):
+                    if(i==0 && GameActivity.blocks != blocks){
+                     break;
+                    }
+                    float loop=(blocks.get(i).loopNumI ==-1)?blocks.get(i).loopNumO :blocks.get(i).loopNumI;
+                    for (int j=0;j<2;j++)
+                        parser(GameActivity.loops.get((int)loop));
                     break;
             }
         }

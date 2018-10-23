@@ -3,7 +3,6 @@ package com.example.ilya2.rob;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -16,7 +15,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Set;
 import java.util.logging.Logger;
 
 public class GameActivity extends AppCompatActivity {
@@ -34,7 +32,8 @@ public class GameActivity extends AppCompatActivity {
     boolean moveALL=false;
 
     static int activeRobot=0;
-    static int comLim=1;
+    static final int startEnergy = 10;
+    static int comLim=startEnergy;
     static int newCom=0;
 
     static int map[][];
@@ -46,7 +45,11 @@ public class GameActivity extends AppCompatActivity {
     static Command commands[];
     static Command trash;
     static ArrayList<Block> blocks;
-    static int touchedBlock=-1;//-1 значение, при котором нет тронутых))) блоков
+
+    static ArrayList<ArrayList<Block>> loops;
+    static int loopNum=-1;
+    static float touchedBlock=-1;//-1 значение, при котором нет тронутых))) блоков
+    // + может быть дробным, где целая часть - номер цикла, а дробная номер блока в цикле
     static ArrayList<Stuff>stuff;
     static int screenWidth,screenHeight;
 
@@ -85,10 +88,11 @@ public class GameActivity extends AppCompatActivity {
         else if(StartActivity.sw.isChecked())Utils.TwoButtonAllertDialog(this,"Туториал",
                 "Вы уже прошли обучение. Хотите повторить?","Нет","Ага");
 
-        commands = new Command[3];
+        commands = new Command[4];
         blocks = new ArrayList<>();
-        int step = screenHeight/6+(screenHeight*4/5-Command.size*commands.length)/2;
-        trash = new Command(this,5,step-Command.size-5,-1);
+        loops = new ArrayList<>();
+        int step = screenHeight/7+(screenHeight*6/7-Command.size*commands.length)/2;
+        trash = new Command(this,squares[0][0].x-Command.size,screenHeight-Command.size*1.5f,-1);
         for (int i=0;i<commands.length;i++) {
             commands[i] = new Command(this,5 , step+i*(Command.size+10), i);
         }
@@ -179,7 +183,15 @@ public class GameActivity extends AppCompatActivity {
                 block.delete();
             blocks.removeAll(blocks);
         }
-        comLim=1;
+        if(loops!=null) {
+            for (ArrayList<Block> loop : loops) {
+                for (int i = 0; i < loop.size(); i++)
+                    loop.get(i).delete();
+                loop.removeAll(loop);
+            }
+            loops.removeAll(loops);
+        }
+        comLim=startEnergy;
         newCom=0;
         textLim.setText("Энергия "+String.valueOf(comLim-newCom));
     }
@@ -264,6 +276,13 @@ public class GameActivity extends AppCompatActivity {
                         newCom++;
                         t.setText("");
                         blocks.add(new Block(this, commands[i].x, commands[i].y,commands[i].type,blocks.size()));
+
+                        if(commands[i].type==3) {
+                            loops.add(new ArrayList<Block>());
+                            loops.get(loops.size()-1).add(blocks.get(blocks.size()-1));
+                            loops.get(loops.size()-1).get(0).setNum(loops.size()-1+0.1f);
+                        }
+
                         touchedBlock=blocks.size()-1;
                         commands[i].touched=false;
                         break;
@@ -271,22 +290,27 @@ public class GameActivity extends AppCompatActivity {
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(touchedBlock!=-1){
-                    if(trash.image.getAlpha()!=1f && blocks.size()==1)
+                    if(trash.image.getAlpha()!=1f)
                         trash.startAnim();
                     if(moveALL) {
                         moveBlocks(event.getX(), event.getY());
                         break;
-                    }//установка координатов касания
-                    int size=blocks.get(touchedBlock).size;
-                    blocks.get(touchedBlock).setBlockXY(event.getX()-size/2,event.getY()-size/2);
-
+                    }
+                    int size=blocks.get(0).size;
                     if(still)
                         checkLongClick(event.getX()-size/2,event.getY()-size/2);
 
-                    Block to = null, that = blocks.get(touchedBlock);//to - к чему присоединяет, that - что присоединяет
+                    Block to = null, that=getThat();//to - к чему присоединяет, that - что присоединяет
+
+                    //установка координатов касания
+                    that.setBlockXY(event.getX()-size/2,event.getY()-size/2);
+
                     if(that.discon==null)that.setDiscon();
-                    if (that.checkTopConnection(event.getX(), event.getY())) {//проверка на присоединение сверху устанавливает координаты косания
-                        blocks.remove(that);
+                    if (that.checkTopConnection(event.getX(), event.getY())) {//проверка на присоединение сверху устанавливает координаты касания
+                        if(that.num!=-1)
+                            blocks.remove(that);
+                        else
+                            loops.get(loopNum).remove(that);
                         blocks.add(0, that);
                         refreshBlocks();
                         log.info("log: connected!\n");
@@ -296,50 +320,92 @@ public class GameActivity extends AppCompatActivity {
                     //добавление обьекта в список в нужное место
                     if (to != null) {
                         log.info("log: connected!\n");
-                        blocks.remove(that);
-                        blocks.add(blocks.indexOf(to) + 1, that);
-                        refreshBlocks();
+                        //если изначально блок был в главной
+                        if(that.num!=-1)
+                            blocks.remove(that);
+                        else // или в цикле loopNum
+                            loops.get(loopNum).remove(that);
+                        //если присоединение в цикле, то loopNumO !=-1
+                        if(that.loopNumO ==-1) {
+                            blocks.add(blocks.indexOf(to) + 1, that);
+                            refreshBlocks();
+                        //во внутренний
+                        }else if(to.loopNumI ==-1){
+                            loops.get((int)to.loopNumO).add( loops.get((int)to.loopNumO).indexOf(to)+1,that);
+                            refreshLoop((int)to.loopNumO);
+                            loopNum=-1;
+                        //или внешний
+                        }else{
+                            loops.get((int)to.loopNumI).add( loops.get((int)to.loopNumI).indexOf(to)+1,that);
+                            refreshLoop((int)to.loopNumI);
+                            loopNum=-1;
+                        }
                     }
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 //log.info("log: Up event\n");
-                if(blocks.size()==1){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
+                Block that=getThat();// that - этот блок
+                if(blocks.size()==1 && (loops.size()==0 || loops.get(0).size()==1)){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
                     for (Command com: commands)
                         if(com.isUnderBlock(blocks.get(0))) {
                             if(blocks.get(0).newCom)
                                 newCom--;
                             blocks.get(0).delete();
                             blocks.remove(blocks.get(0));
+                            if(touchedBlock%1!=0) {
+                                loops.get((int)touchedBlock).remove(that);
+                                loops.remove((int)touchedBlock);
+                            }
                             touchedBlock=-1;
                             break;
                         }
                         if(blocks.size()==0)
                             t.setText("Просто переместите блок сюда...");
-                }
-                if(blocks.size()==1 && touchedBlock!=-1 && trash.isUnderBlock(blocks.get(touchedBlock))){
-                    if(blocks.get(touchedBlock).newCom)
-                        newCom--;
-                    blocks.get(touchedBlock).delete();
-                    blocks.remove(blocks.get(0));
-                    touchedBlock=-1;
-                    break;
+                    //Удаление над корзиной
+                    if(touchedBlock!=-1 && trash.isUnderBlock(that)){
+                        if(that.newCom)
+                            newCom--;
+                        that.delete();
+                        blocks.remove(blocks.get(0));
+                        if(touchedBlock%1!=0) {
+                            loops.get((int)touchedBlock).remove(that);
+                            loops.remove((int)touchedBlock);
+                        }
+                        touchedBlock=-1;
+                        break;
+                    }
                 }
                 if(trash.image.getAlpha()!=0f)
-                    trash.stopAnim();
+                     trash.stopAnim();
                 //удаление не присоединенного блока
-                if (touchedBlock!=-1 && blocks.size()>0 &&!blocks.get(touchedBlock).connected && !moveALL) {
-                    if(blocks.get(touchedBlock).newCom)newCom--;
-                    blocks.get(touchedBlock).delete();
-                    blocks.remove(blocks.get(touchedBlock));
+                if (touchedBlock!=-1 && blocks.size()>0 &&!that.connected && !moveALL) {
+                    if(that.newCom)newCom--;
+                    that.delete();
+                    if(touchedBlock%1==0)
+                        blocks.remove(that);
+                    else {
+                        if(that.num!=-1){
+                            blocks.remove(that);
+                        }
+                        if(that.type==3){
+                            removeLoop((that.loopNumI!=-1)?(int)that.loopNumI:(int)that.loopNumO);
+                            newCom++;
+                            }
+                        else loops.get((int)touchedBlock).remove(that);
+                        //if(loops.get((int)touchedBlock).size()==0)
+                           // loops.remove((int)touchedBlock);
+                    }
                 } //else block.touched = false; !!!!!
                 touchedBlock=-1;
+                loopNum=-1;
 
                 moveALL=false;
                 longClick = null;
                 still = false;
 
                 refreshBlocks();
+                getThat();
                 textLim.setText("Энергия "+String.valueOf(comLim-newCom));
                 //в коде используется кол-во новых блоков и лимит на их установку!
         }
@@ -350,8 +416,28 @@ public class GameActivity extends AppCompatActivity {
         //ориентация всего блока команд по первому
          for(int i=0;i<blocks.size();i++){
             blocks.get(i).setNum(i);
-            if(i>0)blocks.get(i).setXY(blocks.get(i-1));
+            if(i>0) blocks.get(i).setXY(blocks.get(i-1));//xy!
          }
+         for(int i=0;i<loops.size();i++){
+             refreshLoop(i);
+         }
+    }
+    static int refreshLoop(int loopNum){
+        //ориентация всего блока команд по первому
+        int delta=0;
+        int c=1;
+        for(int i=0;i<loops.get(loopNum).size();i++){
+            if(loopNum != (int)loops.get(loopNum).get(i).loopNumI)//чтобы не менять номер внешнего цикла, если мы внутри него
+                loops.get(loopNum).get(i).setNum(loopNum + (float) (i + 1) / 10);
+            if (i > 0) {
+                loops.get(loopNum).get(i).setYX(loops.get(loopNum).get(i - 1),delta);//yx!
+                if(loops.get(loopNum).get(i).type==3) {
+                    delta += refreshLoop((int) loops.get(loopNum).get(i).loopNumI);
+                    c++;
+                }
+            }
+        }
+        return delta + (loops.get(loopNum).size()-1)*(Block.size)+c*10;
     }
 
     void checkLongClick(float x,float y){
@@ -364,11 +450,12 @@ public class GameActivity extends AppCompatActivity {
             roundX = -1;
             roundY = -1;
         }
+        Block that = getThat();// that - этот блок
         if(still && (new Date()).getTime()-longClick.getTime()>500) {
             moveALL = true;
             still = false;
-            blocks.get(touchedBlock).connected = true;
-            blocks.get(touchedBlock).discon = null;
+            that.connected = true;
+            that.discon = null;
             long mills = 100L;
             Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
             assert vibrator != null;
@@ -379,10 +466,40 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
+    void removeLoop(int loopNum){
+        //удаление во внешнем цикле если мы во внутреннем
+        if(loopNum == (int)loops.get(loopNum).get(0).loopNumI)
+            loops.get((int)loops.get(loopNum).get(0).loopNumO).remove(loops.get(loopNum).get(0));
+        int startSize = loops.get(loopNum).size();//чтобы не залезть в тот же цикл по первму блоку
+        while (loops.get(loopNum).size()!=0){
+            if(loops.get(loopNum).get(0).type==3 && loops.get(loopNum).size()!=startSize)
+                removeLoop((int)loops.get(loopNum).get(0).loopNumI);
+            else {
+                loops.get(loopNum).get(0).delete();
+                loops.get(loopNum).remove(0);
+            }
+        }
+        loops.remove(loopNum);
+    }
+
     void moveBlocks(float x,float y){
-        float deltaY = blocks.get(touchedBlock).y-y;
+        Block that = getThat();// that - этот блок
+        float deltaY = that.y-y;
         blocks.get(0).setBlockXY(x,blocks.get(0).y-deltaY);
         refreshBlocks();
+    }
+
+    static int afterPoint(float a){
+        String t = String.valueOf(a);
+        return Integer.valueOf(t.substring(t.indexOf('.')+1));
+    }
+
+    Block getThat(){
+        Block that=null;
+        if(touchedBlock%1!=0){
+            that = loops.get((int)touchedBlock).get(afterPoint(touchedBlock)-1);
+        }else if(touchedBlock!=-1)that = blocks.get((int)touchedBlock);
+        return that;
     }
 
     @Override
