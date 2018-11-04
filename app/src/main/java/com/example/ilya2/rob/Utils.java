@@ -30,7 +30,7 @@ class Utils {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
                                 if(TextButton.equals("Еще раз") || TextButton.equals("Вперёд."))
-                                    GameActivity.startGame(main);
+                                    GameActivity.startGame((GameActivity) main);
                                 ADVisible=false;
                             }
                         });
@@ -60,7 +60,7 @@ class Utils {
                 SharedPreferences.Editor editor = GameActivity.mSettings.edit();
                 editor.putBoolean(GameActivity.APP_PREFERENCES_TUTOR, false);
                 editor.apply();
-                new Tutorial(main);
+                new Tutorial((GameActivity)main);
                 dialog.cancel();
                 ADVisible=false;
             }

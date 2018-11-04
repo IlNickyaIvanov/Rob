@@ -26,22 +26,36 @@ public class Stuff {
         stuff.setImageResource(R.drawable.question);
         main.addContentView(stuff, new RelativeLayout.LayoutParams(size,size));
     }
-    Stuff(Activity activity, ArrayList<ArrayList<Square>> map){
+    Stuff(Activity activity, ArrayList<ArrayList<Square>> map, int sqX,int sqY){
         this.size = Square.size;
-        int []sqXY=SettingsActivity.randomSqXY();
-        x = map.get(sqXY[1]).get(sqXY[0]).x;sqX=sqXY[0];
-        y = map.get(sqXY[1]).get(sqXY[0]).y;sqY=sqXY[1];
+        if(sqX==-1 && sqY==-1) {
+            int[] sqXY = SettingsActivity.randomSqXY();
+            x = map.get(sqXY[1]).get(sqXY[0]).x;this.sqX = sqXY[0];
+            y = map.get(sqXY[1]).get(sqXY[0]).y;this.sqY = sqXY[1];
+            map.get(sqXY[1]).get(sqXY[0]).ID_NUMBER=3;
+        }else{
+            x = map.get(sqY).get(sqX).x;this.sqX=sqX;
+            y = map.get(sqY).get(sqX).y;this.sqY=sqY;
+        }
         stuff = new ImageView(activity);
         stuff.setX(x);
         stuff.setY(y);
         stuff.setImageResource(R.drawable.question);
         activity.addContentView(stuff,new RelativeLayout.LayoutParams(size,size));
-
+        type = (Math.random()>0.1)?1:0;
     }
     Stuff(Activity activity, int sqX, int sqY,int type){
         this.size = Square.size;
-        x = GameActivity.squares[sqY][sqX].x;this.sqX=sqX;
-        y = GameActivity.squares[sqY][sqX].y;this.sqY=sqY;
+        if(GameActivity.squares!=null) {
+            x = GameActivity.squares[sqY][sqX].x;
+            y = GameActivity.squares[sqY][sqX].y;
+        }
+        else {
+            x = SettingsActivity.map.get(sqY).get(sqX).x;
+            y = SettingsActivity.map.get(sqY).get(sqX).y;
+        }
+        this.sqX=sqX;
+        this.sqY=sqY;
         this.type = type;
         stuff = new ImageView(activity);
         stuff.setX(x);

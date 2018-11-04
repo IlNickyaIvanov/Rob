@@ -47,7 +47,15 @@ public class Command {
                 return false;
             }
         });
-        else{
+        //мега супер секретная фича
+        else{ image.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                GameActivity.comLim=(GameActivity.comLim==10)?0:10;
+                GameActivity.textLim.setText("Энергия "+String.valueOf(GameActivity.comLim-GameActivity.newCom));
+                return false;
+            }
+           });
             image.setAlpha(0f);
         }
     }

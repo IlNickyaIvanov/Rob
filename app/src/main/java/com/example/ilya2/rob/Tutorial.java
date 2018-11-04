@@ -13,18 +13,20 @@ public class Tutorial {
 
     static boolean isTutorial,task;
     static MyTimer timer;
-    private Activity activity;
+    private GameActivity activity;
     private ArrayList<String> steps;
     private Table table;
     private int stepNum=0;
-    private int rX,rY,hX,hY,direction,power;//координаты в момент начала выполнения задания
+    private int rX,rY,r2X,r2Y,hX,hY,direction,direction2,power;//координаты в момент начала выполнения задания
     private ArrayList<int[]> sblocks;//лист содержит типы блоков, из оргинальной последовательности
-    Tutorial(Activity main){
+    //private ArrayList<ArrayList<int[]>> sloops;
+    Tutorial(GameActivity main){
         isTutorial = true;
         activity = main;
         timer = new MyTimer();
         timer.start();
         sblocks = new ArrayList<>();
+        //sloops = new ArrayList<>();
         //вот эт удаляет весь стафф на карте, ага костыль
         for (Stuff stf: GameActivity.stuff) {
             stf.delete();
@@ -142,7 +144,8 @@ public class Tutorial {
         if(GameActivity.move)
             return false;
         else if(GameActivity.robots[0].broken && GameActivity.robots[1].broken) {
-            if(stepNum == 8){
+            if(stepNum == 8 && GameActivity.robots[0].sqX==GameActivity.stuff.get(0).sqX
+                    && GameActivity.robots[0].sqY==GameActivity.stuff.get(0).sqY){
                 for(int i=0;i<GameActivity.stuff.size();++i)
                     GameActivity.stuff.remove(0);
                 GameActivity.robots[1] = new Robot(activity,GameActivity.squares[0].length-1,GameActivity.squares.length-1,0,GameActivity.squares);
@@ -159,11 +162,16 @@ public class Tutorial {
             Utils.AlertDialog(activity,"УПС","Похоже охотник тебя поймал.\n Попробуй еще разок...","ок");
             GameActivity.robots[0].delete();
             GameActivity.robots[0] = new Robot(activity,rX,rY,direction,GameActivity.squares);
+            if(GameActivity.robots[1].image!=null){
+                GameActivity.robots[0].setBroken(true);
+                GameActivity.robots[1].delete();
+                GameActivity.robots[1] = new Robot(activity,r2X,r2Y,direction2,GameActivity.squares);
+            }
             for (Stuff stf: GameActivity.stuff){
                 stf.close();
             }
             GameActivity.comLim = power;
-            rebuildBlocks();
+            if(sblocks.size()>0)rebuildBlocks();
             GameActivity.hunter.setXY(hX,hY);
         }
         else{
@@ -188,33 +196,76 @@ public class Tutorial {
     void safe(){
         rX = GameActivity.robots[0].sqX;
         rY = GameActivity.robots[0].sqY;
+        r2X = GameActivity.robots[1].sqX;
+        r2Y = GameActivity.robots[1].sqY;
         hX = GameActivity.hunter.sqX;
         hY = GameActivity.hunter.sqY;
         direction = GameActivity.robots[0].direction;
+        direction2 = GameActivity.robots[1].direction;
         power = GameActivity.comLim;
         copyBlocks();
     }
 
     void copyBlocks(){
+        sblocks.removeAll(sblocks);
         for(Block block: GameActivity.blocks){
             sblocks.add(new int[]{block.type,(block.newCom)?1:0});
         }
+        /*sloops.removeAll(sloops);
+        for(int i=0;i<GameActivity.loops.size();i++){
+            ArrayList<int[]> loop = new ArrayList<>();
+            for (Block block:GameActivity.loops.get(i)){
+                loop.add(new int[]{block.type,(block.newCom)?1:0});
+            }
+            sloops.add(loop);
+        }
+        */
     }
 
     void rebuildBlocks(){
         float x,y;
         x = GameActivity.blocks.get(0).x;
         y = GameActivity.blocks.get(0).y;
+
         for(Block block: GameActivity.blocks){
             block.delete();
         }
         GameActivity.blocks.removeAll(GameActivity.blocks);
-        GameActivity.blocks.add(new Block(activity,x,y,sblocks.get(0)[0],0));
-        GameActivity.blocks.get(0).setOld(sblocks.get(0)[1]==0);
-        for(int i=1;i<sblocks.size();++i){
-            GameActivity.blocks.add(new Block(activity,0,0,sblocks.get(i)[0],0));
-            GameActivity.blocks.get(i).setOld(sblocks.get(i)[1]==0);
+
+        /*for(int i=0;i<GameActivity.loops.size();i++) {
+            for (Block block : GameActivity.loops.get(i))
+                block.delete();
+            GameActivity.loops.get(i).removeAll(GameActivity.loops.get(i));
         }
+        GameActivity.loops.removeAll(GameActivity.loops);
+        */
+        GameActivity.blocks.add(new Block(activity, x, y, sblocks.get(0)[0], 0));
+        GameActivity.blocks.get(0).setOld(sblocks.get(0)[1] == 0);
+
+        for(int i=1;i<sblocks.size();++i){
+                GameActivity.blocks.add(new Block(activity, 0, 0, sblocks.get(i)[0], 0));
+                GameActivity.blocks.get(i).setOld(sblocks.get(i)[1] == 0);
+            /*if(GameActivity.blocks.get(i).type==3) {
+                GameActivity.loops.add(new ArrayList<Block>());
+                GameActivity.loops.get(GameActivity.loops.size()).add(GameActivity.blocks.get(i));
+                GameActivity.loops.get(GameActivity.loops.size()).get(0).setNum(GameActivity.loops.size()-1+0.1f);
+            }*/
+        }
+
+        /*for(int i=0;i<sloops.size();i++){
+            for (int j =1;j<sloops.get(i).size();j++) {
+                if (sloops.get(i).get(j)[0] != 3){
+                    GameActivity.loops.get(i).add(new Block(activity, 0, 0, sloops.get(i).get(j)[0], -1));
+                    GameActivity.loops.get(i).get(j).setOld(sblocks.get(i)[1] == 0);
+                }else{
+                    try{
+                        GameActivity.loops.get()
+                    }catch (Throwable t){
+
+                    }
+                }
+            }
+        }*/
         GameActivity.refreshBlocks();
     }
 

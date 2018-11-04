@@ -2,24 +2,39 @@ package com.example.ilya2.rob;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import java.util.Date;
 import java.util.logging.Logger;
 
 public class Block {
+
+    final static String colors[]={
+            "#70ff4fff",//феолетовый
+            "#705B42FF",//синий
+            "#7042FFFD",//голубой
+            "#704CFF42",//зеленый
+            "#70FFE433",//желтый
+            "#70FF9533",//оранжевый
+            "#70FF3933",//красный
+    };
+
     ImageView image;
     static int size=Command.size*95/100, alpha; // размер картинки, врещение, прозрачность
     boolean connected=false;
 
     int num=-1;//порядковый номер в листе blocks
-    float loopNumO =-1, loopNumI =-1;//пордковый номер [цикл.номер в цикле] внешнего цикла/внутреннего
+    float loopNumO =-1, loopNumI =-1,loopSize=-1;//пордковый номер [цикл.номер в цикле] внешнего цикла/внутреннего и размер
+    TextView loopBack;
     float x,y;
+    float speedX,speedY;
     int type;
     boolean newCom=true;
     private final MediaPlayer bubble,stone;
@@ -27,7 +42,12 @@ public class Block {
     int logy=0;
     Date discon;
     @SuppressLint("ClickableViewAccessibility")
+
+    Activity activity;
+
+    @SuppressLint("ClickableViewAccessibility")
     Block(Activity main, float x, float y, int type, final int number) {
+        this.activity = main;
         this.num = number;
         this.type = type;
         this.x=x;
@@ -51,20 +71,19 @@ public class Block {
                 break;
         }
         main.addContentView(image, new RelativeLayout.LayoutParams(size, size));
-        image.setOnTouchListener(new View.OnTouchListener()
-        {@Override
-        public boolean onTouch(View v, MotionEvent event)
-        {
-            logy=0;
-            log.info("log: Block touched\n");
-            setDiscon();
-            GameActivity.longClick = new Date();
-            GameActivity.still = true;
-            if(loopNumO !=-1)
-                GameActivity.loopNum=(int) loopNumO;
-            GameActivity.touchedBlock=(loopNumO ==-1)?num: loopNumO;
-            return false;
-        }
+        image.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                logy=0;
+                log.info("log: Block touched\n");
+                setDiscon();
+                GameActivity.longClick = new Date();
+                GameActivity.still = true;
+                if(loopNumO !=-1)
+                    GameActivity.loopNum=(int) loopNumO;
+                GameActivity.touchedBlock=(loopNumO ==-1)?num: loopNumO;
+                return false;
+            }
         });
         bubble = MediaPlayer.create(main, R.raw.bubblepop);
         stone = MediaPlayer.create(main, R.raw.stonedry);
@@ -72,7 +91,7 @@ public class Block {
     //установка координат с проверкой на присоединение
     Block setXY(){
         //setBlockXY(this.x,this.y);
-        if((new Date()).getTime()-discon.getTime()<=501) {
+        if((new Date()).getTime()-discon.getTime()<=501 || (speedX>80 || speedY>80)) {
             //log.info("log: выброс");
             setBlockXY(this.x,this.y);
             return null;
@@ -133,7 +152,7 @@ public class Block {
                         || (GameActivity.blocks.get(0).type==3 && GameActivity.loops.get(0).size()==1 )));
         boolean isTop=false;
         if(GameActivity.blocks.get(0).y == y)isTop=true;
-        if((new Date()).getTime()-discon.getTime()<=501) {
+        if((new Date()).getTime()-discon.getTime()<=501 || (speedX>80 || speedY>80)) {
             //log.info("log: выброс");
             setBlockXY(this.x,this.y);
             return false;
@@ -185,6 +204,11 @@ public class Block {
             if(newCom)
                 GameActivity.newCom--;
         }
+        parent=null;
+        if(loopBack!=null)
+            parent = (FrameLayout) loopBack.getParent();
+        if(parent!=null)
+            parent.removeView(loopBack);
         bubble.start();
     }
     void setOld(boolean o){
@@ -199,7 +223,9 @@ public class Block {
     }
     //чистая установка координат
     void setBlockXY(float x, float y){
-        if(logy==0)log.info("log: XY\n");
+        speedX = Math.abs(this.x - (x-size/2));
+        speedY = Math.abs(this.y - (y-size/2));
+        log.info("log: XY\n"+speedX+"\n"+speedY+"\n");
         logy=1;
         this.x = x;
         this.y = y;
@@ -215,5 +241,34 @@ public class Block {
         loopNumO = number;
         if(GameActivity.afterPoint(loopNumO)!=1)
             num = -1;
+    }
+
+    boolean setLoopBackground(){
+        if(image.getParent()==null)
+            return false;
+        FrameLayout parent=null;
+        if(loopBack!=null)
+            parent = (FrameLayout) loopBack.getParent();
+        if(parent!=null)
+            parent.removeView(loopBack);
+        loopBack = new TextView(activity);
+        float width,height=size+10;
+        if(loopNumI!=-1){
+            width = loopSize;
+            loopBack.setBackgroundColor(Color.parseColor(colors[(int)(loopNumI)%7]));
+        }else{
+            width = loopSize;
+            loopBack.setBackgroundColor(Color.parseColor(colors[(int)(loopNumO)%7]));
+        }
+        loopBack.setWidth((int)width);
+        loopBack.setHeight((int)height);
+        loopBack.setX(x-5);
+        loopBack.setY(y-5);
+        activity.addContentView(loopBack,new RelativeLayout.LayoutParams((int)(width),(int)(height)));
+        bringToTheFront();
+        return true;
+    }
+    void bringToTheFront(){
+        image.bringToFront();
     }
 }

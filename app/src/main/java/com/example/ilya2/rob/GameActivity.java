@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public class GameActivity extends AppCompatActivity {
@@ -32,7 +33,7 @@ public class GameActivity extends AppCompatActivity {
     boolean moveALL=false;
 
     static int activeRobot=0;
-    static final int startEnergy = 10;
+    static final int startEnergy = 1;
     static int comLim=startEnergy;
     static int newCom=0;
 
@@ -97,8 +98,16 @@ public class GameActivity extends AppCompatActivity {
             commands[i] = new Command(this,5 , step+i*(Command.size+10), i);
         }
     }
-    public static void createMap(Activity activity){
+    public static void createMap(GameActivity activity){
         map = new int[SettingsActivity.mapSize][SettingsActivity.mapSize];//брать из настроек
+        if(SettingsActivity.switchUseMap!=null && SettingsActivity.switchUseMap.isChecked()){
+            for(int i=0;i<SettingsActivity.map.size();i++){
+                for(int j=0;j<SettingsActivity.map.get(0).size();j++){
+                    map[i][j] = SettingsActivity.map.get(i).get(j).ID_NUMBER;
+                }
+            }
+            stuff = new ArrayList<>();
+        }
         if(squares!=null)
             for (Square[] sqs:squares)
                 for (Square sq:sqs)
@@ -114,12 +123,17 @@ public class GameActivity extends AppCompatActivity {
         Square.startY = (screenHeight-Square.size*map.length)/2;
         for (int i=0;i<map.length;i++){
             for(int j=0;j<map[0].length;j++){
-                squares[i][j] = new Square(activity,j*(Square.size)+Square.startX ,i*(Square.size)+Square.startY,map[i][j]);
+                if(Math.round(map[0].length/2)!=j || Math.round(map.length/2)!=i) {//чтобы не ущемлять хантера
+                    squares[i][j] = new Square(activity, j * (Square.size) + Square.startX, i * (Square.size) + Square.startY, map[i][j]);
+                    if (map[i][j] == 3)
+                        stuff.add(new Stuff(activity, j, i, (Math.random() > 0.1) ? 1 : 0));
+                }else
+                    squares[i][j] = new Square(activity, j * (Square.size) + Square.startX, i * (Square.size) + Square.startY, 0);
             }
         }
     }
 
-    static void setNewMap(int [][] mapy,Activity activity){
+    static void setNewMap(int [][] mapy,GameActivity activity){
         for (Square[] sqs:squares)
             for (Square sq:sqs)
                 sq.delete();
@@ -141,7 +155,7 @@ public class GameActivity extends AppCompatActivity {
         hunter = new Hunter(activity,hunter.sqX,hunter.sqY,map);
     }
 
-    static void startGame(Activity activity){
+    static void startGame(GameActivity activity){
         activeRobot=0;
         gameOver=false;
         createMap(activity);
@@ -160,23 +174,24 @@ public class GameActivity extends AppCompatActivity {
         hunter = new Hunter(activity,Math.round(squares[0].length/2),Math.round(squares.length/2),map);
         robots[activeRobot].startAnim();
 
-        //рандомные стены из настроек
-        for (int i=0;i<SettingsActivity.wallNum;i++){
-            int[]xy=Stuff.randomSqXY();
-            map[xy[1]][xy[0]]=2;
-            squares[xy[1]][xy[0]].ID_NUMBER=2;
-            squares[xy[1]][xy[0]].image.setAlpha(0f);
-        }
+        if(SettingsActivity.switchUseMap==null || !SettingsActivity.switchUseMap.isChecked()) {
+            //рандомные стены из настроек
+            for (int i = 0; i < SettingsActivity.wallNum; i++) {
+                int[] xy = Stuff.randomSqXY();
+                map[xy[1]][xy[0]] = 2;
+                squares[xy[1]][xy[0]].ID_NUMBER = 2;
+                squares[xy[1]][xy[0]].image.setAlpha(0f);
+            }
 
-        if(stuff!=null) {
-            for (Stuff stf : stuff)
-                stf.delete();
-            stuff.removeAll(stuff);
-        }
-        else stuff = new ArrayList<>();
-        //рандомные вопросы из настроек
-        for (int i = 0; i< SettingsActivity.stuffNum; i++){
-            stuff.add(new Stuff(activity,(float)Math.random()));
+            if (stuff != null) {
+                for (Stuff stf : stuff)
+                    stf.delete();
+                stuff.removeAll(stuff);
+            } else stuff = new ArrayList<>();
+            //рандомные вопросы из настроек
+            for (int i = 0; i < SettingsActivity.stuffNum; i++) {
+                stuff.add(new Stuff(activity, (float) Math.random()));
+            }
         }
         if(blocks !=null){
             for (Block block: blocks)
@@ -332,12 +347,12 @@ public class GameActivity extends AppCompatActivity {
                         //во внутренний
                         }else if(to.loopNumI ==-1){
                             loops.get((int)to.loopNumO).add( loops.get((int)to.loopNumO).indexOf(to)+1,that);
-                            refreshLoop((int)to.loopNumO);
+                            //refreshLoop((int)to.loopNumO);
                             loopNum=-1;
                         //или внешний
                         }else{
                             loops.get((int)to.loopNumI).add( loops.get((int)to.loopNumI).indexOf(to)+1,that);
-                            refreshLoop((int)to.loopNumI);
+                            //refreshLoop((int)to.loopNumI);
                             loopNum=-1;
                         }
                     }
@@ -346,16 +361,13 @@ public class GameActivity extends AppCompatActivity {
             case MotionEvent.ACTION_UP:
                 //log.info("log: Up event\n");
                 Block that=getThat();// that - этот блок
-                if(blocks.size()==1 && (loops.size()==0 || loops.get(0).size()==1)){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
+                if(blocks.size()==1 && that == blocks.get(0)){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
                     for (Command com: commands)
                         if(com.isUnderBlock(blocks.get(0))) {
-                            if(blocks.get(0).newCom)
-                                newCom--;
                             blocks.get(0).delete();
                             blocks.remove(blocks.get(0));
                             if(touchedBlock%1!=0) {
-                                loops.get((int)touchedBlock).remove(that);
-                                loops.remove((int)touchedBlock);
+                                removeLoop((int)touchedBlock);
                             }
                             touchedBlock=-1;
                             break;
@@ -364,13 +376,10 @@ public class GameActivity extends AppCompatActivity {
                             t.setText("Просто переместите блок сюда...");
                     //Удаление над корзиной
                     if(touchedBlock!=-1 && trash.isUnderBlock(that)){
-                        if(that.newCom)
-                            newCom--;
                         that.delete();
                         blocks.remove(blocks.get(0));
-                        if(touchedBlock%1!=0) {
-                            loops.get((int)touchedBlock).remove(that);
-                            loops.remove((int)touchedBlock);
+                        if(that.type==3) {
+                            removeLoop((int)touchedBlock);
                         }
                         touchedBlock=-1;
                         break;
@@ -379,8 +388,9 @@ public class GameActivity extends AppCompatActivity {
                 if(trash.image.getAlpha()!=0f)
                      trash.stopAnim();
                 //удаление не присоединенного блока
+                if(blocks.size()==1 && blocks.get(0).type==3 && that == blocks.get(0))
+                    that.connected=true;
                 if (touchedBlock!=-1 && blocks.size()>0 &&!that.connected && !moveALL) {
-                    if(that.newCom)newCom--;
                     that.delete();
                     if(touchedBlock%1==0)
                         blocks.remove(that);
@@ -390,7 +400,7 @@ public class GameActivity extends AppCompatActivity {
                         }
                         if(that.type==3){
                             removeLoop((that.loopNumI!=-1)?(int)that.loopNumI:(int)that.loopNumO);
-                            newCom++;
+                            //newCom++;
                             }
                         else loops.get((int)touchedBlock).remove(that);
                         //if(loops.get((int)touchedBlock).size()==0)
@@ -418,18 +428,21 @@ public class GameActivity extends AppCompatActivity {
             blocks.get(i).setNum(i);
             if(i>0) blocks.get(i).setXY(blocks.get(i-1));//xy!
          }
+         ArrayList<Integer>nums=new ArrayList<>();
          for(int i=0;i<loops.size();i++){
+             if(nums.contains(i))continue;
              refreshLoop(i);
+             nums.addAll(setLoopBack(i));
          }
     }
     static int refreshLoop(int loopNum){
         //ориентация всего блока команд по первому
         int delta=0;
-        int c=1;
+        int c=1;//сколько подциклов
         for(int i=0;i<loops.get(loopNum).size();i++){
             if(loopNum != (int)loops.get(loopNum).get(i).loopNumI)//чтобы не менять номер внешнего цикла, если мы внутри него
                 loops.get(loopNum).get(i).setNum(loopNum + (float) (i + 1) / 10);
-            if (i > 0) {
+            if(i>0){
                 loops.get(loopNum).get(i).setYX(loops.get(loopNum).get(i - 1),delta);//yx!
                 if(loops.get(loopNum).get(i).type==3) {
                     delta += refreshLoop((int) loops.get(loopNum).get(i).loopNumI);
@@ -437,7 +450,21 @@ public class GameActivity extends AppCompatActivity {
                 }
             }
         }
+        loops.get(loopNum).get(0).loopSize = delta + (loops.get(loopNum).size())*(Block.size)+c*10;
         return delta + (loops.get(loopNum).size()-1)*(Block.size)+c*10;
+    }
+
+    static ArrayList<Integer> setLoopBack(int loopNum){
+        ArrayList<Integer> nums = new ArrayList<>();
+        nums.add(loopNum);
+        loops.get(loopNum).get(0).setLoopBackground();
+        for (int i=1;i<loops.get(loopNum).size();i++){
+            loops.get(loopNum).get(i).bringToTheFront();
+            if(loops.get(loopNum).get(i).type==3)
+                nums.addAll(setLoopBack((int) loops.get(loopNum).get(i).loopNumI));
+
+        }
+        return nums;
     }
 
     void checkLongClick(float x,float y){
