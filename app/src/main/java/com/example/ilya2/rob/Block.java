@@ -34,7 +34,6 @@ public class Block {
     float loopNumO =-1, loopNumI =-1,loopSize=-1;//пордковый номер [цикл.номер в цикле] внешнего цикла/внутреннего и размер
     TextView loopBack;
     float x,y;
-    float speedX,speedY;
     int type;
     boolean newCom=true;
     private final MediaPlayer bubble,stone;
@@ -91,7 +90,7 @@ public class Block {
     //установка координат с проверкой на присоединение
     Block setXY(){
         //setBlockXY(this.x,this.y);
-        if((new Date()).getTime()-discon.getTime()<=501 || (speedX>80 || speedY>80)) {
+        if((new Date()).getTime()-discon.getTime()<=501) {
             //log.info("log: выброс");
             setBlockXY(this.x,this.y);
             return null;
@@ -152,7 +151,7 @@ public class Block {
                         || (GameActivity.blocks.get(0).type==3 && GameActivity.loops.get(0).size()==1 )));
         boolean isTop=false;
         if(GameActivity.blocks.get(0).y == y)isTop=true;
-        if((new Date()).getTime()-discon.getTime()<=501 || (speedX>80 || speedY>80)) {
+        if((new Date()).getTime()-discon.getTime()<=501) {
             //log.info("log: выброс");
             setBlockXY(this.x,this.y);
             return false;
@@ -223,9 +222,7 @@ public class Block {
     }
     //чистая установка координат
     void setBlockXY(float x, float y){
-        speedX = Math.abs(this.x - (x-size/2));
-        speedY = Math.abs(this.y - (y-size/2));
-        log.info("log: XY\n"+speedX+"\n"+speedY+"\n");
+        log.info("log: XY\n");
         logy=1;
         this.x = x;
         this.y = y;
