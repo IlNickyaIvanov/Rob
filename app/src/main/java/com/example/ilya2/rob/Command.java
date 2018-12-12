@@ -16,7 +16,7 @@ public class Command {
     int type;
     String text;
     @SuppressLint("ClickableViewAccessibility")
-    Command(final GameActivity main, final float x, final float y, int type) {
+    Command(final GameActivity main, final float x, final float y, final int type) {
         this.type =type;
         image = new ImageView(main);
         this.x=x;image.setX(x);
@@ -39,16 +39,20 @@ public class Command {
                 break;
         }
         main.addContentView(image, new RelativeLayout.LayoutParams(size, size));
-        if(type!=-1)image.setOnTouchListener(new View.OnTouchListener() {
+        image.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event)
             {
                 touched = true;
+                if(type == -1) {
+                    GameActivity.comLim = (GameActivity.comLim == 10) ? 0 : 10;
+                    GameActivity.textLim.setText("Энергия " + String.valueOf(GameActivity.comLim - GameActivity.newCom));
+                }
                 return false;
             }
         });
         //мега супер секретная фича
-        else{ image.setOnLongClickListener(new View.OnLongClickListener() {
+        /*else{ image.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 GameActivity.comLim=(GameActivity.comLim==10)?0:10;
@@ -57,7 +61,7 @@ public class Command {
             }
            });
             image.setAlpha(0f);
-        }
+        }*/
     }
 
     void startAnim(){

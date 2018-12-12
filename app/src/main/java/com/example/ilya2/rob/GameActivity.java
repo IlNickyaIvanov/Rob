@@ -49,8 +49,9 @@ public class GameActivity extends AppCompatActivity {
 
     static ArrayList<ArrayList<Block>> loops;
     static int loopNum=-1;
-    static float touchedBlock=-1;//-1 значение, при котором нет тронутых))) блоков
-    // + может быть дробным, где целая часть - номер цикла, а дробная номер блока в цикле
+
+    static Block touchedBlock=null;//тронутый блок
+
     static ArrayList<Stuff>stuff;
     static int screenWidth,screenHeight;
 
@@ -285,142 +286,106 @@ public class GameActivity extends AppCompatActivity {
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
                 //log.info("log: Touch event\n");
-                if(newCom>=comLim)break;
-                for (int i = 0; i<commands.length;++i)
+                if (newCom >= comLim) break;
+                for (int i = 0; i < commands.length; ++i)
                     if (commands[i].touched) {
                         newCom++;
-                        t.setText("");
-                        blocks.add(new Block(this, commands[i].x, commands[i].y,commands[i].type,blocks.size()));
-
-                        if(commands[i].type==3) {
-                            loops.add(new ArrayList<Block>());
-                            loops.get(loops.size()-1).add(blocks.get(blocks.size()-1));
-                            loops.get(loops.size()-1).get(0).setNum(loops.size()-1+0.1f);
+                        t.setText("");//текст на поле
+                        touchedBlock = new Block(this, commands[i].x, commands[i].y, commands[i].type,-1);
+                        //для первого блока особые условия
+                        if(blocks.size()==0){
+                            touchedBlock.num = 0;
+                            touchedBlock.connected = true;
                         }
 
-                        touchedBlock=blocks.size()-1;
-                        commands[i].touched=false;
+                        if (commands[i].type == 3) {
+                            loops.add(new ArrayList<Block>());
+                            loops.get(loops.size() - 1).add(touchedBlock);
+                            touchedBlock.loopNumI = (loops.size() - 1 + 0.1f);//1 - для первого блока в цикле!
+                        }
+                        commands[i].touched = false;
                         break;
-                }
+                    }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if(touchedBlock!=-1){
-                    if(trash.image.getAlpha()!=1f)
+                if (touchedBlock != null) {
+                    if (trash.image.getAlpha() != 1f)
                         trash.startAnim();
-                    if(moveALL) {
+                    if (moveALL) {
                         moveBlocks(event.getX(), event.getY());
                         break;
                     }
-                    int size=blocks.get(0).size;
-                    if(still)
-                        checkLongClick(event.getX()-size/2,event.getY()-size/2);
+                    int size = Block.size;
+                    if (still)
+                        checkLongClick(event.getX() - size / 2, event.getY() - size / 2);
 
-                    Block to = null, that=getThat();//to - к чему присоединяет, that - что присоединяет
-
+                    Block to;//to - к чему присоединяет
                     //установка координатов касания
-                    that.setBlockXY(event.getX()-size/2,event.getY()-size/2);
+                    touchedBlock.setBlockXY(event.getX() - size / 2, event.getY() - size / 2);
+                    //эта штука для проверки слишком раннего присоединения
+                    if (touchedBlock.discon == null) touchedBlock.setDiscon();
 
-                    if(that.discon==null)that.setDiscon();
-                    if (that.checkTopConnection(event.getX(), event.getY())) {//проверка на присоединение сверху устанавливает координаты касания
-                        if(that.num!=-1)
-                            blocks.remove(that);
-                        else
-                            loops.get(loopNum).remove(that);
-                        blocks.add(0, that);
-                        refreshBlocks();
-                        log.info("log: connected!\n");
-                    } else {//установка координат косания и проверка на присоединение снизу
-                        to = that.setXY();
-                    }
-                    //добавление обьекта в список в нужное место
-                    if (to != null) {
-                        log.info("log: connected!\n");
-                        //если изначально блок был в главной
-                        if(that.num!=-1)
-                            blocks.remove(that);
-                        else // или в цикле loopNum
-                            loops.get(loopNum).remove(that);
-                        //если присоединение в цикле, то loopNumO !=-1
-                        if(that.loopNumO ==-1) {
-                            blocks.add(blocks.indexOf(to) + 1, that);
-                            refreshBlocks();
-                        //во внутренний
-                        }else if(to.loopNumI ==-1){
-                            loops.get((int)to.loopNumO).add( loops.get((int)to.loopNumO).indexOf(to)+1,that);
-                            //refreshLoop((int)to.loopNumO);
-                            loopNum=-1;
-                        //или внешний
-                        }else{
-                            loops.get((int)to.loopNumI).add( loops.get((int)to.loopNumI).indexOf(to)+1,that);
-                            //refreshLoop((int)to.loopNumI);
-                            loopNum=-1;
-                        }
+
+                    if(blocks.size()==0)
+                        break;//!!!!!! если tb единственный то вылет
+                    //проверка на присоединение сверху
+                    to = touchedBlock.checkTopConnection();
+                    //проверка на присоединение снизу
+                    if (to == null)
+                        to = touchedBlock.setXY();
+                    if (to == null && blocks.size()>0) {
+                        touchedBlock.connected = false;
+                        touchedBlock.num = -1;
+                        touchedBlock.loopNumO = -1;
+                    }else{
+                        touchedBlock.addToBlocks();
+                        touchedBlock = null;
                     }
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                //log.info("log: Up event\n");
-                Block that=getThat();// that - этот блок
-                if(blocks.size()==1 && that == blocks.get(0)){//эта штука проверяет есть ли над командами блок и удаляет его в случае +
-                    for (Command com: commands)
-                        if(com.isUnderBlock(blocks.get(0))) {
-                            blocks.get(0).delete();
-                            blocks.remove(blocks.get(0));
-                            if(touchedBlock%1!=0) {
-                                removeLoop((int)touchedBlock);
-                            }
-                            touchedBlock=-1;
+                if(touchedBlock==null)
+                    break;
+                boolean del = false;
+                if (blocks.size() == 0) {//эта штука проверяет есть ли над командами блок и удаляет его в случае +
+                    for (Command com : commands)
+                        if (com.isUnderBlock(touchedBlock)) {
+                            del = true;
                             break;
                         }
-                        if(blocks.size()==0)
-                            t.setText("Просто переместите блок сюда...");
                     //Удаление над корзиной
-                    if(touchedBlock!=-1 && trash.isUnderBlock(that)){
-                        that.delete();
-                        blocks.remove(blocks.get(0));
-                        if(that.type==3) {
-                            removeLoop((int)touchedBlock);
-                        }
-                        touchedBlock=-1;
-                        break;
-                    }
+                    if (trash.isUnderBlock(touchedBlock))
+                        del = true;
                 }
-                if(trash.image.getAlpha()!=0f)
-                     trash.stopAnim();
-                //удаление не присоединенного блока
-                if(blocks.size()==1 && blocks.get(0).type==3 && that == blocks.get(0))
-                    that.connected=true;
-                if (touchedBlock!=-1 && blocks.size()>0 &&!that.connected && !moveALL) {
-                    that.delete();
-                    if(touchedBlock%1==0)
-                        blocks.remove(that);
-                    else {
-                        if(that.num!=-1){
-                            blocks.remove(that);
-                        }
-                        if(that.type==3){
-                            removeLoop((that.loopNumI!=-1)?(int)that.loopNumI:(int)that.loopNumO);
-                            //newCom++;
-                            }
-                        else loops.get((int)touchedBlock).remove(that);
-                        //if(loops.get((int)touchedBlock).size()==0)
-                           // loops.remove((int)touchedBlock);
-                    }
-                } //else block.touched = false; !!!!!
-                touchedBlock=-1;
-                loopNum=-1;
 
-                moveALL=false;
+                if (trash.image.getAlpha() != 0f)
+                    trash.stopAnim();
+                //удаление не присоединенного блока
+                if ((del || !touchedBlock.connected) && !moveALL) {
+                    touchedBlock.delete();
+                    if (touchedBlock.loopNumI != -1)
+                        removeLoop((int) touchedBlock.loopNumI);
+                    if (touchedBlock.num != -1)
+                        blocks.remove(touchedBlock);
+                }
+                if(!del && touchedBlock.connected)
+                        touchedBlock.addToBlocks();
+                touchedBlock = null;
+                moveALL = false;
                 longClick = null;
                 still = false;
 
+
                 refreshBlocks();
-                getThat();
-                textLim.setText("Энергия "+String.valueOf(comLim-newCom));
+                textLim.setText("Энергия " + String.valueOf(comLim - newCom));
                 //в коде используется кол-во новых блоков и лимит на их установку!
+                if (blocks.size() == 0)
+                    t.setText("Просто переместите блок сюда...");
+                break;
         }
         return true;
     }
+
 
      static void refreshBlocks(){
         //ориентация всего блока команд по первому
@@ -429,6 +394,7 @@ public class GameActivity extends AppCompatActivity {
             if(i>0) blocks.get(i).setXY(blocks.get(i-1));//xy!
          }
          ArrayList<Integer>nums=new ArrayList<>();
+         //номера отрефрешенных циклов
          for(int i=0;i<loops.size();i++){
              if(nums.contains(i))continue;
              refreshLoop(i);
@@ -454,6 +420,7 @@ public class GameActivity extends AppCompatActivity {
         return delta + (loops.get(loopNum).size()-1)*(Block.size)+c*10;
     }
 
+    //задний фон для циклов
     static ArrayList<Integer> setLoopBack(int loopNum){
         ArrayList<Integer> nums = new ArrayList<>();
         nums.add(loopNum);
@@ -477,11 +444,12 @@ public class GameActivity extends AppCompatActivity {
             roundX = -1;
             roundY = -1;
         }
-        Block that = getThat();// that - этот блок
+        Block that = touchedBlock;// that - этот блок
         if(still && (new Date()).getTime()-longClick.getTime()>500) {
             moveALL = true;
             still = false;
             that.connected = true;
+            that.addToBlocks();
             that.discon = null;
             long mills = 100L;
             Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -494,9 +462,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     void removeLoop(int loopNum){
-        //удаление во внешнем цикле если мы во внутреннем
-        if(loopNum == (int)loops.get(loopNum).get(0).loopNumI)
-            loops.get((int)loops.get(loopNum).get(0).loopNumO).remove(loops.get(loopNum).get(0));
+        //удаление во внешнем цикле если мы во внутреннем 
         int startSize = loops.get(loopNum).size();//чтобы не залезть в тот же цикл по первму блоку
         while (loops.get(loopNum).size()!=0){
             if(loops.get(loopNum).get(0).type==3 && loops.get(loopNum).size()!=startSize)
@@ -510,8 +476,8 @@ public class GameActivity extends AppCompatActivity {
     }
 
     void moveBlocks(float x,float y){
-        Block that = getThat();// that - этот блок
-        float deltaY = that.y-y;
+        Block that = touchedBlock;// that - этот блок
+        float deltaY = touchedBlock.y-y;
         blocks.get(0).setBlockXY(x,blocks.get(0).y-deltaY);
         refreshBlocks();
     }
@@ -519,14 +485,6 @@ public class GameActivity extends AppCompatActivity {
     static int afterPoint(float a){
         String t = String.valueOf(a);
         return Integer.valueOf(t.substring(t.indexOf('.')+1));
-    }
-
-    Block getThat(){
-        Block that=null;
-        if(touchedBlock%1!=0){
-            that = loops.get((int)touchedBlock).get(afterPoint(touchedBlock)-1);
-        }else if(touchedBlock!=-1)that = blocks.get((int)touchedBlock);
-        return that;
     }
 
     @Override

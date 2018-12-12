@@ -14,6 +14,10 @@ import android.widget.TextView;
 import java.util.Date;
 import java.util.logging.Logger;
 
+import static com.example.ilya2.rob.GameActivity.afterPoint;
+import static com.example.ilya2.rob.GameActivity.refreshBlocks;
+import static com.example.ilya2.rob.GameActivity.touchedBlock;
+
 public class Block {
 
     final static String colors[]={
@@ -31,8 +35,11 @@ public class Block {
     boolean connected=false;
 
     int num=-1;//порядковый номер в листе blocks
-    float loopNumO =-1, loopNumI =-1,loopSize=-1;//пордковый номер [цикл.номер в цикле] внешнего цикла/внутреннего и размер
-    TextView loopBack;
+    float loopNumO =-1;//номер во внешнем
+    float loopNumI =-1;//номер своего цикла
+    //пордковый номер [цикл.номер в цикле] внешнего цикла/внутреннего
+    float loopSize=-1;//размер
+    TextView loopBack;// задний фон цикла
     float x,y;
     int type;
     boolean newCom=true;
@@ -47,8 +54,8 @@ public class Block {
     @SuppressLint("ClickableViewAccessibility")
     Block(Activity main, float x, float y, int type, final int number) {
         this.activity = main;
-        this.num = number;
         this.type = type;
+        this.num = number;
         this.x=x;
         this.y=y;
         image = new ImageView(main);
@@ -78,9 +85,15 @@ public class Block {
                 setDiscon();
                 GameActivity.longClick = new Date();
                 GameActivity.still = true;
-                if(loopNumO !=-1)
-                    GameActivity.loopNum=(int) loopNumO;
-                GameActivity.touchedBlock=(loopNumO ==-1)?num: loopNumO;
+                if(num!=-1 && touchedBlock==null) {
+                    GameActivity.touchedBlock = GameActivity.blocks.get(num);
+                    GameActivity.blocks.remove(num);
+                }
+                if(loopNumO!=-1 && touchedBlock==null){
+                    GameActivity.touchedBlock = GameActivity.loops.get((int)loopNumO).get(afterPoint(loopNumO)-1);
+                    GameActivity.loops.get((int)loopNumO).remove(afterPoint(loopNumO)-1);
+                }
+                refreshBlocks();
                 return false;
             }
         });
@@ -96,24 +109,17 @@ public class Block {
             return null;
         }
         for (Block block: GameActivity.blocks){
-            if(block.num == num)
-                continue;
             if(block.type==3) {
-                Block to=checkRightConnection((int)block.loopNumO);
-                if(to!=null){
-                    if(type == 3 && this.loopNumI==-1)
-                        this.loopNumI = this.loopNumO;
-                    this.loopNumO = to.loopNumO;//для того чтобы понимать справва /снизу
-                    return to;
-                }
+                Block to=checkRightConnection((int)block.loopNumI);
+                if(to!=null) return to;
             }
+            //присоединение во внешней последовательности
             if(getRoundX()==block.getRoundX() &&  getRoundY()==block.getRoundY(size)) {
                 connected = true;
                 discon=null;
                 stone.start();
-                GameActivity.touchedBlock=-1;
                 loopNumO = -1;
-                loopNumI = -1;
+                num = block.num+1;
                 return block;
             }
         }
@@ -126,49 +132,35 @@ public class Block {
                 continue;
             if(block.type==3 && GameActivity.loops.get(loopNum).get(0)!=block) {//вторая проверка чтобы не входить в тот же цикл
                 Block to=checkRightConnection((int)block.loopNumI);
-                if(to!=null){
-                    if(type == 3 && this.loopNumI==-1)
-                        this.loopNumI =  this.loopNumO;
-                    this.loopNumO = to.loopNumO;
-                    return to;
-                }
+                if(to!=null) return to;
             }
             if (getRoundX() == block.getRoundX(size) && getRoundY() == block.getRoundY()) {
                 connected = true;
                 discon = null;
+                loopNumO = (block.type!=3)?block.loopNumO:block.loopNumI + 0.1f;
+                num = -1;
                 stone.start();
-                GameActivity.touchedBlock = -1;
                 return block;
             }
         }
         return null;
     }
 
-    boolean checkTopConnection(float x,float y){
-        this.x=x-size/2;
-        this.y=y-size/2;
+    Block checkTopConnection(){
         connected = (GameActivity.blocks.size() ==1 && (GameActivity.blocks.get((0)).type!=3
                         || (GameActivity.blocks.get(0).type==3 && GameActivity.loops.get(0).size()==1 )));
-        boolean isTop=false;
-        if(GameActivity.blocks.get(0).y == y)isTop=true;
         if((new Date()).getTime()-discon.getTime()<=501) {
             //log.info("log: выброс");
-            setBlockXY(this.x,this.y);
-            return false;
+            return null;
         }
-        if(getRoundY(size)== GameActivity.blocks.get(isTop?1:0).getRoundY() && getRoundX()== GameActivity.blocks.get(isTop?1:0).getRoundX()){
-            this.x = GameActivity.blocks.get(0).x;
-            this.y = GameActivity.blocks.get(0).y- size;
-            setBlockXY(this.x,this.y);
+        if(getRoundY(size)== GameActivity.blocks.get(0).getRoundY() && getRoundX()== GameActivity.blocks.get(0).getRoundX()){
             connected = true;
             discon=null;
             stone.start();
-            GameActivity.touchedBlock=-1;
-            loopNumO = -1;
-            loopNumI = -1;
-            return true;
+            num = 0;
+            return GameActivity.blocks.get(0);
         }
-        return false;
+        return null;
     }
 
     //установка к предыдущему блоку
@@ -232,12 +224,24 @@ public class Block {
     void setNum(int number){
         num = number;
         loopNumO =-1;
-        loopNumI =-1;
     }
     void setNum(float number){
         loopNumO = number;
-        if(GameActivity.afterPoint(loopNumO)!=1)
+        if(afterPoint(loopNumO)!=1)
             num = -1;
+    }
+
+    void addToBlocks(){
+        log.info("log: connected!\n");
+        //присоединение во внешней последовательности
+        if(num!=-1)
+            GameActivity.blocks.add(num, GameActivity.touchedBlock);
+        if(num==0 && GameActivity.blocks.size()>1)
+            setBlockXY(GameActivity.blocks.get(1).x,GameActivity.blocks.get(1).y-size);
+        //в цикле
+        if(loopNumO!=-1)
+            GameActivity.loops.get((int)loopNumO).add(afterPoint(loopNumO)-1,GameActivity.touchedBlock);
+        refreshBlocks();
     }
 
     boolean setLoopBackground(){
