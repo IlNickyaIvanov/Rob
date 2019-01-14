@@ -1,6 +1,5 @@
 package com.example.ilya2.rob;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -15,7 +14,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Set;
 import java.util.logging.Logger;
 
 public class GameActivity extends AppCompatActivity {
@@ -86,7 +84,7 @@ public class GameActivity extends AppCompatActivity {
         if(!mSettings.getBoolean(APP_PREFERENCES_TUTOR,false )){
             new Tutorial(this);
         }
-        else if(StartActivity.sw.isChecked())Utils.TwoButtonAllertDialog(this,"Туториал",
+        else if(MenuActivity.sw.isChecked())Utils.TwoButtonAllertDialog(this,"Туториал",
                 "Вы уже прошли обучение. Хотите повторить?","Нет","Ага");
 
         commands = new Command[4];

@@ -1,5 +1,6 @@
 package com.example.ilya2.rob;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.CountDownTimer;
@@ -10,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Tutorial {
-
+    //прочитай, всяк сюда входящий
+    //если надумаешь изменять текст обучения и сценарий, придется менять код, ибо лень делать все универсальным
+    //в частности, нужно поменять switch который привязывает table к view и исключение в возрождалке, если нужно
     static boolean isTutorial,task;
     static MyTimer timer;
     private GameActivity activity;
@@ -18,7 +21,7 @@ public class Tutorial {
     private Table table;
     private int stepNum=0;
     private int rX,rY,r2X,r2Y,hX,hY,direction,direction2,power;//координаты в момент начала выполнения задания
-    private ArrayList<int[]> sblocks;//лист содержит типы блоков, из оргинальной последовательности
+    private ArrayList<int[]> sblocks;//лист содержит типы блоков, из оргинальной последовательности, в методах update и checkComplTask
     //private ArrayList<ArrayList<int[]>> sloops;
     Tutorial(GameActivity main){
         isTutorial = true;
@@ -74,36 +77,33 @@ public class Tutorial {
         }
         else {//следующее сообщение
             String msg = setTask(steps.get(stepNum));
-            if(Table.isTableVisible)table.delete();
+            if(Table.isTableVisible)
+                table.delete();
             switch (stepNum){
                 case 1:
-                    table=new Table(activity,msg,GameActivity.commands[1].image,"right");
-                    break;
-
+                    table = new Table(activity,msg,GameActivity.robots[0].image,"down");break;
                 case 2:
-                    table = new Table(activity,"Перемести блок и нажми ШАГ",1);
-                case 5:
-                    if(stepNum!=2)table = new Table(activity,"Соедини блоки, как на картинке",2);
-                case 7:
-                    new Table(activity,msg,GameActivity.stuff.get(0).stuff,"down");
+                    new Table(activity,msg,GameActivity.commands[0].image,"right");
+                    table = new Table(activity,"",1);
                     break;
-
+                case 3:
+                    table = new Table(activity,msg,GameActivity.textLim,"down");break;
                 case 4:
-                    table=new Table(activity,msg,activity.findViewById(R.id.stepLim),"down");
+                    Utils.AlertDialog(activity, "Обучение"+ " " + "1" + "." + stepNum,
+                            msg, "оK");
+                    table = new Table(activity,"присоедини к старому блоку новые и запускай",2);
                     break;
-                case 6:
-                    table=new Table(activity,msg,GameActivity.hunter.image,"down");
+                case 5:
+                    table = new Table(activity,msg,GameActivity.hunter.image,"down");
                     break;
-                case 9:
-                    table=new Table(activity,msg,GameActivity.robots[1].image,"left");
+                case 7:
+                    table = new Table(activity,msg,GameActivity.robots[0].image,"down");
                     break;
                 default:
                     Utils.AlertDialog(activity, "Обучение"+ " " + "1" + "." + stepNum,
-                            setTask(steps.get(stepNum)), "оK");
+                            msg, "оK");
                     break;
-
             }
-
             stepNum++;
         }
     }
@@ -144,7 +144,8 @@ public class Tutorial {
         if(GameActivity.move)
             return false;
         else if(GameActivity.robots[0].broken && GameActivity.robots[1].broken) {
-            if(stepNum == 8 && GameActivity.robots[0].sqX==GameActivity.stuff.get(0).sqX
+            //это исключение когда по сценарию в ресурсе молния
+            if(stepNum == 7 && GameActivity.robots[0].sqX==GameActivity.stuff.get(0).sqX
                     && GameActivity.robots[0].sqY==GameActivity.stuff.get(0).sqY){
                 for(int i=0;i<GameActivity.stuff.size();++i)
                     GameActivity.stuff.remove(0);
@@ -159,6 +160,7 @@ public class Tutorial {
                 task = false;
                 return false;
             }
+            //стандарт, игрок косячит его возрождают
             Utils.AlertDialog(activity,"УПС","Похоже охотник тебя поймал.\n Попробуй еще разок...","ок");
             GameActivity.robots[0].delete();
             GameActivity.robots[0] = new Robot(activity,rX,rY,direction,GameActivity.squares);
@@ -166,7 +168,10 @@ public class Tutorial {
                 GameActivity.robots[0].setBroken(true);
                 GameActivity.robots[1].delete();
                 GameActivity.robots[1] = new Robot(activity,r2X,r2Y,direction2,GameActivity.squares);
+                GameActivity.robots[1].startAnim();
             }
+            else
+                GameActivity.robots[0].startAnim();
             for (Stuff stf: GameActivity.stuff){
                 stf.close();
             }
@@ -179,14 +184,15 @@ public class Tutorial {
             for (int i = 0; i < GameActivity.stuff.size(); i++) {
                 task = !GameActivity.stuff.get(i).opened || task;
             }
+            //для проверки последнего задания
             if(stepNum==9 && GameActivity.robots[0].broken){
-                task=false;
+                task=true;
             }
             if(!task){
-                for (Stuff stf:GameActivity.stuff)
-                    stf.delete();
-                for(int i=0;i<GameActivity.stuff.size();++i)
-                    GameActivity.stuff.remove(0);
+                for(int i=0;i<GameActivity.stuff.size();++i) {
+                    GameActivity.stuff.get(0).delete();
+                }
+                GameActivity.stuff.removeAll(GameActivity.stuff);
                 table.delete();
             }
         }
@@ -293,7 +299,8 @@ public class Tutorial {
         }
         @Override
         public void onTick(long millisUntilFinished) {
-            if (steps != null  && !Utils.isADVisible() && !Table.isTableVisible)update();
+            if (steps != null  && !Utils.isADVisible() && !Table.isTableVisible)
+                update();
         }
         @Override
         public void onFinish() {

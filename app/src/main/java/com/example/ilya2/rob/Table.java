@@ -21,7 +21,7 @@ public class Table {
         this.activity = activity;
         text = new TextView(activity);
         text.setText(_text);
-        int line=3,max_len=0,c=0;
+        int line=1,max_len=0,c=0;
         for(int i=1;i<_text.length();++i){
             c++;
             if(_text.substring(i - 1, i).equals("\n")) {
@@ -32,7 +32,7 @@ public class Table {
         }
         if(c>max_len)max_len=c;
         width = (max_len*pxFromDp(TEXT_SIZE)/2);
-        height = line*(pxFromDp(TEXT_SIZE)+10);
+        height = (line+2)*(pxFromDp(TEXT_SIZE)+10);
 
         int w = view.getWidth();w=(w==0)?Square.size:w;
         int h = view.getHeight();h=(h==0)?Square.size:h;
@@ -55,6 +55,10 @@ public class Table {
                 text.setY(view.getY());
                 break;
         }
+        if(text.getX()+width>GameActivity.screenWidth)
+            text.setX(text.getX()-(text.getX()+width-GameActivity.screenWidth));
+        if(text.getY()+height>GameActivity.screenHeight)
+            text.setY(text.getY()-(text.getY()+height-GameActivity.screenHeight));
         text.setBackgroundResource(R.drawable.orange);
         text.setTextColor(Color.parseColor("#FFDBB3"));
 
@@ -91,7 +95,7 @@ public class Table {
         }
         int size = GameActivity.screenHeight/3;
         image.setX(GameActivity.screenWidth/2-size);
-        image.setY(GameActivity.screenHeight*2/3-pxFromDp(TEXT_SIZE)-5);
+        image.setY(GameActivity.screenHeight*2/3-2*pxFromDp(TEXT_SIZE)-5);
 
         text = new TextView(activity);
         text.setText(_text);
@@ -99,10 +103,8 @@ public class Table {
         text.setX(image.getX()+size-width/2);
         text.setY(image.getY()+size);
 
-        isTableVisible = true;
-
         activity.addContentView(image, new RelativeLayout.LayoutParams(2*size,size));
-        activity.addContentView(text,new RelativeLayout.LayoutParams(width,pxFromDp(TEXT_SIZE)+10));
+        activity.addContentView(text,new RelativeLayout.LayoutParams(width,(int)(pxFromDp(TEXT_SIZE)*1.5)));
     }
 
     private int pxFromDp(float dp) {
